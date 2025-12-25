@@ -1,0 +1,1329 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  
+  <title>격돌! 붕어빵 대전 - 실시간 팀 대항 타이쿤 게임</title>
+  <meta name="description" content="팥붕 vs 슈붕, 당신의 선택은? 붕어빵을 굽고 판매하여 우리 팀을 승리로 이끄세요!">
+  <meta name="keywords" content="붕어빵대전, 붕어빵 대전, 붕어빵 전투, 격돌 붕어빵 대전, 붕어빵, 타이쿤, 웹게임, 미니게임, 팥붕, 슈붕, 무료게임, 붕어빵만들기, HTML5게임">
+  <meta name="author" content="032">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="격돌! 붕어빵 대전">
+  <meta property="og:description" content="실시간 붕어빵 굽기 대결! 팥붕파vs슈붕파 당신의 선택은?">
+  <meta property="og:image" content="https://fishbun-battle-3cf7b.web.app/og_image.png"> <meta property="og:url" content="https://fishbun-battle-3cf7b.web.app"> <meta property="og:site_name" content="격돌! 붕어빵 대전">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="격돌! 붕어빵 대전">
+  <meta name="twitter:description" content="실시간 붕어빵 굽기 대결! 팥붕파vs슈붕파 당신의 선택은?">
+  <meta name="twitter:image" content="https://fishbun-battle-3cf7b.web.app/og_image.png">
+
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  
+  <meta name="robots" content="index, follow">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QRXMPEPP3Y"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-QRXMPEPP3Y');
+  </script> 
+
+  <style>
+    @font-face {
+      font-family: 'DodumLocal';
+      src: url('assets/font.woff2') format('woff2'); 
+      font-weight: normal; font-style: normal;
+    }
+    @font-face {
+      font-family: 'JoseonPalace';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ChosunGs.woff') format('woff');
+      font-weight: normal; font-style: normal; font-display: swap;
+    }
+    @font-face {
+        font-family: 'Together';
+        src: url('https://cdn.jsdelivr.net/gh/fonts-archive/GangwonEduPower/GangwonEduPower.woff2') format('woff2');
+        font-weight: 900; font-display: swap;
+    }
+
+    *, *::before, *::after {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    input, textarea {
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      -webkit-touch-callout: default !important;
+      cursor: auto;
+    }
+
+    * { -webkit-tap-highlight-color: transparent; }
+    html, body, #game-wrapper, #game-root { touch-action: none; }
+    
+    body {
+      overflow: hidden;
+      background: #202020;
+      font-family: 'DodumLocal';
+      margin: 0; padding: 0; width: 100%; height: 100%;
+    }
+
+    #game-wrapper {
+      position: fixed; inset: 0;
+      background: #202020; overflow: hidden;
+    }
+
+    .screen { position: absolute; inset: 0; display: none; }
+    .screen.active { display: flex; }
+
+    #screen-loading{
+      align-items:center; justify-content:center;
+      background:#000; z-index: 9999;
+    }
+    #loading-inner{
+      width:1280px; height:720px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #loading-text{
+      font-family:'Together', sans-serif; font-size:48px; color:#fff;
+    }
+
+    #total-scale-root {
+      position: absolute;
+      width: 1280px;
+      height: 820px; 
+      transform-origin: top center;
+    }
+
+    #top-bar {
+      position: relative; 
+      width: 1280px;      
+      height: 80px;       
+      margin-bottom: 10px; 
+      
+      display: flex;
+      z-index: 99999;
+      font-family: 'Together', sans-serif;
+      border-radius: 40px;
+      border: 5px solid #000;
+      box-sizing: border-box;
+      overflow: hidden;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+      background: #333;
+    }
+
+    #bar-red {
+      height: 100%; width: 50%; background: #673435;
+      display: flex; align-items: center; justify-content: flex-start;
+      padding-left: 40px; color: #fff; font-size: 32px;
+      transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      white-space: nowrap;
+    }
+
+    #bar-shu {
+      height: 100%; width: 50%; background: #f5c842;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 40px; color: #000; font-size: 32px; font-weight: bold;
+      transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+      white-space: nowrap;
+    }
+
+    #game-root {
+      position: relative;
+      width: 1280px; height: 720px;
+      overflow: hidden;
+      box-shadow: 0 0 0 4px #000;
+    }
+    #screen-title {
+      align-items: center; justify-content: center; background: #000;
+    }
+    #screen-title-inner {
+      position: relative; width: 1280px; height: 720px; overflow: hidden;
+    }
+    #title-bg, #title-logo, #title-image {
+      position: absolute; top: 0; left: 0; width: 1280px; height: 720px;
+      background-size: 100% 100%; background-repeat: no-repeat;
+    }
+    #title-bg { background-image: url('assets/title_bg.png'); }
+    #title-logo {
+      background-image: url('assets/title.png');
+      transform: translateY(-100%);
+      transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+    }
+    #title-image {
+      background-image: url('assets/title_image.png');
+      transform: translateY(100%);
+      transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.28s;
+    }
+    #title-button {
+      position: absolute; left: 50%; top: 540px;
+      width: 400px; height: 140px;
+      background-image: url('assets/title_button.png');
+      background-size: 100% 100%; background-repeat: no-repeat;
+      cursor: pointer;
+      transform: translate(-50%, 200%) scale(0.8);
+    }
+    #screen-title.anim-start #title-logo { transform: translateY(0); }
+    #screen-title.anim-start #title-image { transform: translateY(0); }
+    #screen-title.anim-start #title-button {
+      animation: title-btn-pop 0.5s 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes title-btn-pop {
+      0% { transform: translate(-50%, 200%) scale(0.8); }
+      60% { transform: translate(-50%, 0) scale(1.08); }
+      100% { transform: translate(-50%, 0) scale(1.0); }
+    }
+
+    #team-overlay, #team-confirm-overlay {
+      position: absolute; 
+      top: 0; left: 0; 
+      width: 1280px; height: 720px;
+      z-index: 20005;
+      pointer-events: auto;
+    }
+    .team-asset {
+      position: absolute; top: 0; left: 0;
+      background-repeat: no-repeat; background-size: 100% 100%;
+      will-change: transform; transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #team-confirm-overlay { z-index: 20; }
+    .confirm-asset {
+      position: absolute; top: 0; left: 0;
+      background-repeat: no-repeat; background-size: 100% 100%;
+    }
+    .confirm-asset.confirm1 { z-index: 1; }
+    .confirm-asset.confirm3 { z-index: 2; }
+    .confirm-asset.confirm2 { z-index: 3; }
+
+    .team-asset.full, .confirm-asset { width: 1280px; height: 720px; }
+    .team-asset.small { width: 380px; height: 100px; top: auto; bottom: 30px; }
+    
+    #team-overlay .team1 { transform: translateX(-100%); }
+    #team-overlay .team2 { transform: translateX(100%); }
+    #team-overlay .team3 { transform: translateY(-100%); }
+    #team-overlay .team4 { left: 130px; transform: translateY(200%); }
+    #team-overlay .team5 { right: 130px; left: auto; transform: translateY(200%); }
+    
+    #team-overlay.anim-in .team1 { transform: translateX(0); }
+    #team-overlay.anim-in .team2 { transform: translateX(0); }
+    #team-overlay.anim-in .team3 { transform: translateY(0); }
+    #team-overlay.anim-in .team4 { transform: translateY(0); }
+    #team-overlay.anim-in .team5 { transform: translateY(0); }
+
+    .confirm-asset.confirm3{ transform: translateY(100%); transition: transform 0.8s; }
+    #team-confirm-overlay.anim-in .confirm-asset.confirm3{ transform: translateY(0); }
+
+    #screen-game {
+      flex-direction: column; position: relative; background: #000; box-sizing: border-box;
+    }
+    .game-layer {
+      position: absolute; top: 0; left: 0;
+      width: 1280px; height: 720px;
+      background-repeat: no-repeat; pointer-events: none; background-size: 100% 100%;
+    }
+    .game-layer.is-smoking { animation: smoke-anim 0.6s steps(1) infinite; }
+    @keyframes smoke-anim {
+      0% { background-image: url('assets/smoke1.png'); }
+      50% { background-image: url('assets/smoke2.png'); }
+      100% { background-image: url('assets/smoke1.png'); }
+    }
+
+    .customer-group { position: absolute; width: 340px; height: 250px; z-index: 6; pointer-events: none; }
+    .customer-sprite {
+      position: absolute; left: -70px; bottom: -60px;
+      width: 300px; height: 330px;
+      background-size: contain; background-repeat: no-repeat; background-position: bottom center;
+    }
+    .speech-bubble {
+      position: absolute; left: 140px; top: 70px; width: 200px; height: 160px;
+      background-image: url('assets/customer_bubble.png'); background-size: 100% 100%;
+      display: none; pointer-events: none;
+    }
+    .speech-bubble.active { display: block; }
+    .bubble-fill-container {
+      position: absolute; inset: 0; overflow: hidden; z-index: 0;
+      -webkit-mask-image: url('assets/customer_bubble.png'); -webkit-mask-size: 100% 100%;
+      mask-image: url('assets/customer_bubble.png'); mask-size: 100% 100%;
+    }
+    .bubble-fill {
+      position: absolute; inset: 0; background: #f9a13a; pointer-events: none; transform: translateY(0%);
+    }
+    .speech-bubble::after {
+      content: ""; position: absolute; inset: 0;
+      background-image: url('assets/customer_bubble_outline.png'); background-size: 100% 100%;
+      pointer-events: none; z-index: 1;
+    }
+    .bubble-text {
+      position: relative; z-index: 2; padding: 15px 20px 20px 35px;
+      font-family: 'DodumLocal'; font-size: 18px; font-weight: bold;
+      line-height: 1.5; color: #1b1710; word-break: keep-all;
+    }
+    .customer-shiver { animation: shiver 0.1s infinite; }
+    @keyframes shiver {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-3px, 1px); }
+      50% { transform: translate(3px, -2px); }
+      75% { transform: translate(-2px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    #hud-bar{ position:absolute; inset: 0; z-index: 100; background: transparent; padding: 0; pointer-events: none; }
+    #hud-bar div{
+      position:absolute; display:block; margin:0; color:#fff;
+      font-family: 'Together'; font-weight:900; font-size:30px;
+      text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000;
+    }
+    #hud-bar #hud-left-group {
+      position: absolute;
+      top: 16px;
+      left: 330px;
+      display: flex !important;  
+      gap: 20px;
+      align-items: center;
+    }
+
+    #hud-bar #hud-left-group div {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      margin: 0 !important;
+      white-space: nowrap;
+    }
+    
+    #hud-best{ top: 16px; right: 30px; text-align: right; }
+    #hud-mistake{ display:none; }
+
+    #bag-count {
+      position: absolute; z-index: 102; top: 620px; right: 100px;
+      font-size: 64px; font-family: 'Together'; font-weight: 900; color: #ffffff;
+      -webkit-text-stroke: 2px #000000; pointer-events: none; display: none;
+    }
+    #bag-count.active { display: block; }
+
+    #ui-layer { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; z-index: 200; touch-action: none !important; }
+    .pan-ui, #bag-ui, #display-tray-ui, .customer-ui, .tool-btn-ui {
+      position: absolute; background: transparent; cursor: pointer; border: none; touch-action: none !important;
+    }
+    .tool-btn-ui { z-index: 210; }
+
+    .tray-bread-img {
+      position: absolute; width: 225px; height: 105px;
+      background-image: url('assets/drag_bread.png'); background-size: contain; background-repeat: no-repeat;
+      pointer-events: none; display: none;
+    }
+    #tray-bread-0 { top: 250px; left: 200px; }
+    #tray-bread-1 { top: 250px; left: 320px; }
+    #tray-bread-2 { top: 250px; left: 440px; }
+    #tray-bread-3 { top: 275px; left: 260px; }
+    #tray-bread-4 { top: 275px; left: 380px; }
+    #tray-bread-5 { top: 275px; left: 500px; }
+
+    .drag-ghost {
+      position: fixed; pointer-events: none; z-index: 9999;
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+    }
+    #tool-cursor {
+      position: fixed; z-index: 9998; width: 240px; height: 240px;
+      background-size: contain; background-repeat: no-repeat;
+      transform: translate(-10px, -80px); pointer-events: none; display: none;
+      transition: transform 0.05s ease-out;
+    }
+    #tool-cursor.active { display: block; }
+    #tool-cursor.batter { transform: translate(-10px, -160px); }
+    #tool-cursor.tilting { transform: translate(-10px, -80px) rotate(-30deg); }
+    #tool-cursor.batter.tilting { transform: translate(-10px, -160px) rotate(-30deg); }
+
+    #gameover-root { position: relative; width: 1280px; height: 720px; overflow: hidden; }
+    .gameover-full { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .go-smoke { opacity: 0; transition: opacity 0.25s; }
+    .go-smoke-visible { opacity: 1; }
+    #gameover-paper-wrap {
+      position: absolute; inset: 0; width: 1280px; height: 720px; overflow: hidden;
+      transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.22, 0.9, 0.3, 1.1);
+    }
+    #gameover-paper-wrap.drop-in { transform: translateY(0); }
+    #gameover-paper { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #gameover-paper-inner {
+      position: absolute; inset: 0; box-sizing: border-box;
+      padding: 140px 180px 160px 180px; display: flex; flex-direction: column;
+      justify-content: flex-start; align-items: flex-start; gap: 14px;
+    }
+    #gameover-stats div { font-size: 22px; line-height: 1.5; font-family: 'JoseonPalace', sans-serif; }
+    #result-comment-text { margin-top: 18px; font-size: 24px; line-height: 1.6; max-width: 80%; font-family: 'JoseonPalace', sans-serif; }
+    #btn-result-retry-img{
+      position: absolute; right: 8%; bottom: 10%; width: 220px; height: auto;
+      cursor: pointer; pointer-events: auto;
+    }
+
+    #rotate-overlay {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.85); color: #ffffff; font-size: 18px; z-index: 10000;
+    }
+    #rotate-overlay .box {
+      padding: 14px 20px; border-radius: 12px; background: #222222; border: 2px solid #fab760; text-align: center;
+    }
+
+    #pan-img-0 { transform: translate(-600px, 0px); }
+    #pan-img-1 { transform: translate(-400px, 0px); }
+    #pan-img-2 { transform: translate(-200px, 0px); }
+    #pan-img-3 { transform: translate(0px, 0px); }
+    #pan-img-4 { transform: translate(-600px, 170px); }
+    #pan-img-5 { transform: translate(-400px, 170px); }
+    #pan-img-6 { transform: translate(-200px, 170px); }
+    #pan-img-7 { transform: translate(0px, 170px); }
+
+    #smoke-img-0 { transform: translate(-600px, 0px); }
+    #smoke-img-1 { transform: translate(-400px, 0px); }
+    #smoke-img-2 { transform: translate(-200px, 0px); }
+    #smoke-img-3 { transform: translate(0px, 0px); }
+    #smoke-img-4 { transform: translate(-600px, 190px); }
+    #smoke-img-5 { transform: translate(-400px, 190px); }
+    #smoke-img-6 { transform: translate(-200px, 190px); }
+    #smoke-img-7 { transform: translate(0px, 190px); }
+
+
+    #screen-login {
+      z-index: 20000;
+      background: #fdf5e6;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      
+      display: none; 
+      position: absolute;
+      top: 0; left: 0;
+      width: 1280px; height: 720px;
+    }
+    #screen-login.active { display: flex; }
+    .login-box {
+      width: 400px; padding: 30px;
+      background: #fff; border: 4px solid #5d4037;
+      border-radius: 16px; text-align: center;
+      box-shadow: 8px 8px 0 rgba(0,0,0,0.2);
+      margin: auto;
+    }
+    .login-title { font-size: 28px; margin-bottom: 15px; font-weight: bold; font-family:'Together'; }
+    
+    .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+    .auth-tab { flex: 1; padding: 10px; cursor: pointer; font-weight: bold; color: #aaa; border-bottom: 3px solid transparent; text-align: center; font-size: 16px; }
+    .auth-tab.active { color: #5d4037; border-bottom: 3px solid #ffb347; }
+    
+    .input-group { margin-bottom: 15px; text-align: left; }
+    .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #5d4037; font-size: 16px; }
+    .input-group input {
+      width: 100%; padding: 10px; font-size: 16px; height: auto;
+      border: 2px solid #ccc; border-radius: 8px; outline: none; box-sizing: border-box;
+    }
+    
+    .btn-login {
+      width: 100%; padding: 12px; font-size: 20px; font-family: 'Together';
+      background: #ffb347; color: #fff; border: none; border-radius: 8px;
+      cursor: pointer; margin-top: 10px; box-shadow: 0 4px 0 #e65100;
+    }
+    .btn-login:active { transform: translateY(4px); box-shadow: none; }
+    
+    .hidden { display: none !important; }
+    .login-box.fade-out { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+
+    @media (max-width: 1024px), (hover: none) {
+      .login-box {
+        width: 720px;
+        padding: 40px; 
+        border-width: 6px;
+        border-radius: 24px;
+        box-shadow: 12px 12px 0 rgba(0,0,0,0.2);
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      
+      .login-title { 
+        font-size: 50px !important; 
+        margin-bottom: 25px !important; 
+      }
+      
+      .auth-tabs { margin-bottom: 25px; border-bottom-width: 5px; }
+      .auth-tab { padding: 15px; font-size: 32px; border-bottom-width: 5px; }
+      
+      .input-group { margin-bottom: 20px; }
+      .input-group label { font-size: 28px; margin-bottom: 10px; }
+      .input-group input { 
+        padding: 15px; font-size: 32px; 
+        height: 70px; 
+        border-width: 4px; border-radius: 16px;
+      }
+
+      #chk-auto-login { width: 40px !important; height: 40px !important; }
+      .login-note span { font-size: 22px !important; }
+      label[for="chk-auto-login"], label:has(#chk-auto-login) {
+        font-size: 28px !important;
+      }
+      
+      .btn-login {
+        padding: 15px; font-size: 40px; 
+        height: 90px;
+        border-radius: 16px; margin-top: 25px;
+        box-shadow: 0 8px 0 #e65100;
+      }
+    }
+    #screen-home {
+      display: none;
+      background-color: #1a233a;
+      width: 100%; height: 100%;
+      box-sizing: border-box;
+      padding: 20px;
+      
+      gap: 2px;
+      font-family: 'Together', sans-serif;
+    }
+    #screen-home.active { display: flex; }
+    .dash-box {
+      background: #fcdfa6;
+      border: 4px solid #000;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      color: #000;
+      box-shadow: none; 
+    }
+    .home-main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .home-top-row {
+      flex: 1;
+      display: flex;
+      gap: 2px;
+      min-height: 0;
+    }
+    .box-team {
+      width: 350px;
+      background-color: #b74c4c;
+      background-origin: border-box; 
+      background-clip: border-box;
+      background-size: 100% 100% !important;
+      background-position: center;
+      background-repeat: no-repeat;
+      flex-shrink: 0;
+    }
+    .center-top-wrapper {
+      flex: 1; 
+      display: flex; flex-direction: column;
+      gap: 2px;
+      min-width: 0; 
+    }
+
+    .home-bottom-row {
+      height: 130px;
+      display: flex;
+      gap: 2px;
+    }
+    .box-settings {
+      width: 500px; 
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 45px; font-weight: 900;
+      transition: transform 0.1s;
+      flex-shrink: 0;
+    }
+    .box-settings:active { transform: scale(0.98); }
+
+    .box-nick {
+      flex: 1; 
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 20px;
+    }
+    .nick-label { font-size: 30px; color: #5d4037; font-weight: bold; }
+    .nick-val { font-size: 40px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .home-col-right {
+      width: 410px;
+      position: relative;
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+    }
+    .box-stall {
+      width: 100%; height: 100%;
+      background: #fff;
+      background-image: url('assets/bg_stall_home.png');
+      background-size: 110% 110% !important;
+      background-position: center;
+      border-radius: 16px;
+    }
+    .btn-home-start {
+      position: absolute;
+      bottom: 20px; left: 23px; right: 12px;
+      height: 130px;
+      background-color: transparent;
+      background-image: url('assets/main_game_start.png');
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+      border: none; cursor: pointer; z-index: 10;
+      transition: transform 0.1s;
+    }
+    .btn-home-start:active { transform: scale(0.95); }
+
+    .team-header-overlay { position: absolute; top: 20px; left: 20px; z-index: 2; text-align: left; width: 100%; }
+    .team-lead-title { font-size: 50px; font-weight: 900; color: #fff; -webkit-text-stroke: 2px #000; margin-bottom: 5px; line-height: 1.1; }
+    .team-diff-subtitle { font-size: 35px; font-weight: 900; color: #fff; -webkit-text-stroke: 1.5px #000; }
+
+    .box-rank { flex: 1; display: flex; flex-direction: column; }
+    .rank-header { display: flex; border-bottom: 4px solid #000; height: 55px; font-size: 26px; font-weight: 900; flex-shrink: 0; }
+    .rank-tab { flex: 1; display: flex; align-items: center; justify-content: center; background: #e0c080; cursor: pointer; color: #555; }
+    .rank-tab.active { background: #fcdfa6; color: #000; }
+    .rank-list-area { 
+      flex: 1; 
+      overflow-x: hidden;
+      overflow-y: hidden; 
+      padding: 0; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0; 
+    }
+
+    .rank-row { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      width: 100%; 
+      box-sizing: border-box; 
+      padding: 0 20px; 
+      flex: 1;
+      
+      font-size: 28px; 
+      font-weight: 900; 
+      
+      border-radius: 0; 
+      margin-bottom: 0; 
+      box-shadow: none; 
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      
+      color: #000000; 
+    }
+    .rank-row:last-child { border-bottom: none; }
+
+    .rank-row.rank-1 { 
+      flex-direction: column; 
+      justify-content: center; 
+      align-items: flex-start; 
+      flex: 1.4;
+      border-bottom: 2px solid rgba(0,0,0,0.2); 
+      padding: 0;
+    }
+
+    .rank-1-top { 
+      width: 100%; 
+      display: flex; 
+      justify-content: space-between; 
+      box-sizing: border-box;
+      padding: 0 20px; 
+      font-size: 34px; 
+    }
+
+    .rank-1-msg { 
+      width: 100%;
+      text-align: left;
+      font-size: 20px; 
+      color: #3e2723; 
+      font-family: 'DodumLocal'; 
+      margin-top: 4px;
+      padding-left: 20px;
+      box-sizing: border-box;
+    }
+
+    .rank-row.team-red { background-color: #dcb394; color: #000000; }
+    .rank-row.team-shu { background-color: #ffe9a9; color: #000000; }
+    .rank-row.team-none { background-color: #eaddcf; color: #000000; }
+
+    .box-my-stat { height: 180px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; font-size: 30px; line-height: 1.3; font-weight: 900; }
+    #screen-settings {
+      background: rgba(0, 0, 0, 0.7); 
+      z-index: 30000;
+      align-items: center; justify-content: center;
+    }
+    
+    .settings-box {
+      width: 500px; padding: 40px;
+      background: #fdf5e6;
+      border: 5px solid #5d4037; border-radius: 20px;
+      text-align: center; font-family: 'DodumLocal';
+      box-shadow: 10px 10px 0 rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .settings-title {
+      font-family: 'Together'; font-size: 48px; color: #5d4037;
+      margin-bottom: 10px; border-bottom: 3px solid #ddd; padding-bottom: 10px;
+    }
+
+    .settings-content p {
+      font-size: 20px; font-weight: bold; color: #333; margin: 10px 0;
+    }
+
+    .btn-logout {
+      margin-top: 20px; padding: 15px 30px;
+      font-size: 22px; font-family: 'Together';
+      background: #b63b3b; color: white; border: none; border-radius: 10px;
+      cursor: pointer; box-shadow: 0 4px 0 #8a2b2b; width: 100%;
+    }
+    .btn-logout:active { transform: translateY(4px); box-shadow: none; }
+
+    .btn-close-settings {
+      margin-top: 15px; padding: 10px 30px;
+      font-size: 20px; font-family: 'Together';
+      background: #ccc; color: #333; border: none; border-radius: 10px;
+      cursor: pointer; width: 100%;
+    }
+
+    #screen-pause {
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 50000; display: none;
+      align-items: center; justify-content: center;
+    }
+    #screen-pause.active { display: flex; }
+
+    .pause-box {
+      width: 400px; padding: 40px;
+      background: #fff; border: 8px solid #5d4037;
+      border-radius: 20px; text-align: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+    .pause-title {
+      font-family: 'Together'; font-size: 40px; color: #5d4037;
+      margin-bottom: 30px; border-bottom: 4px solid #ddd; padding-bottom: 15px;
+    }
+
+    .pause-buttons {
+      display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;
+    }
+
+    .btn-pause-action {
+      padding: 15px; font-size: 24px; font-family: 'DodumLocal'; font-weight: bold;
+      border: none; border-radius: 12px; cursor: pointer;
+      box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+    }
+    .btn-resume { background: #fab760; color: white; }
+    .btn-home { background: #ccc; color: #333; }
+
+    .pause-note {
+      font-size: 16px; color: #ff5555; font-weight: bold; margin-top: 10px;
+    }
+
+    .toggle-switch {
+      position: relative; display: inline-block;
+      width: 60px; height: 34px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    
+    .slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; 
+      transition: .4s; border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute; content: "";
+      height: 26px; width: 26px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: .4s; border-radius: 50%;
+    }
+    
+    input:checked + .slider { background-color: #fab760; }
+    
+    input:checked + .slider:before { transform: translateX(26px); }
+
+    .home-bottom-row { height: 130px; display: flex; gap: 5px; }
+    .home-bottom-row .dash-box { 
+        flex: 1; 
+        width: 0; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-weight: 900; 
+        flex-shrink: 0; 
+        text-align: center; 
+        line-height: 1.2; 
+    }
+    .home-bottom-row .box-settings {
+        font-size: 45px; 
+    }
+    .home-bottom-row .box-hof {
+        font-size: 35px; 
+    }
+    .box-settings, .box-hof { cursor: pointer; transition: transform 0.1s; }
+    .box-settings:active, .box-hof:active { transform: scale(0.98); }
+    .box-nick { flex-direction: column; }
+    .nick-label { font-size: 25px; color: #5d4037; font-weight: bold; margin-bottom: 5px; }
+    .nick-val { font-size: 40px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+    #screen-hof { background: rgba(0, 0, 0, 0.7); z-index: 30000; align-items: center; justify-content: center; }
+    .hof-desc {
+        font-size: 22px; 
+        color: #000; 
+        font-weight: 900; 
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .hof-tab-header {
+        display: flex;
+        margin-bottom: 10px;
+        border-bottom: 3px solid #5d4037;
+    }
+    .hof-tab {
+        flex: 1;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 20px;
+        font-weight: bold;
+        color: #888;
+        background: #e0e0e0;
+        cursor: pointer;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .hof-tab.active {
+        background: #fdf5e6;
+        color: #5d4037;
+        border: 3px solid #5d4037;
+        border-bottom: none; 
+        margin-bottom: -3px; 
+        z-index: 1;
+    }
+
+    .hof-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        font-size: 20px;
+        font-family: 'DodumLocal';
+        border: 2px solid rgba(0,0,0,0.1);
+    }
+    .hof-item.team-red { background-color: #dcb394; color: #000; } 
+    .hof-item.team-shu { background-color: #ffe9a9; color: #000; }  
+    .hof-item.team-none { background-color: #eeeeee; color: #aaa; }
+
+    .hof-badge {
+        background: #333; color: #fff; 
+        padding: 2px 8px; border-radius: 4px; 
+        margin-right: 8px; font-size: 16px;
+    }
+
+    .team-red .hof-badge { background-color: #b74c4c; color: #fff; }
+    .team-shu .hof-badge { background-color: #f5c842; color: #000; }
+    .team-none .hof-badge { background-color: #999; color: #fff; }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "VideoGame",
+    "name": "격돌! 붕어빵 대전",
+    "description": "실시간으로 진행되는 팥붕 대 슈붕의 붕어빵 굽기 대결 게임입니다.",
+    "genre": ["Tycoon", "Arcade", "Simulation"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Web Browser",
+    "url": "https://fishbun-battle-3cf7b.web.app",
+    "author": {
+      "@type": "Person",
+      "name": "Developer"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "KRW"
+    }
+  }
+  </script>
+
+</head>
+<body>
+  <div id="rotate-overlay"><div class="box">가로 모드로 플레이해 주세요</div></div>
+  <div id="tool-cursor"></div>
+
+  <div id="game-wrapper">
+    <div id="total-scale-root">
+
+      <div id="top-bar">
+          <div id="bar-red">팥 50%</div>
+          <div id="bar-shu">슈 50%</div>
+        </div>
+      <div id="game-root">
+      <div id="screen-loading" class="screen">
+        <div id="loading-inner">
+          <div id="loading-text">Loading...</div>
+        </div>
+      </div>
+      <div id="screen-login" class="screen">
+        <div class="login-box" id="login-box-container">
+          <div class="login-title" style="font-size:28px; font-weight:bold; margin-bottom:15px; font-family:'Together';">
+            격돌! 붕어빵 대전
+          </div>
+          <div class="auth-tabs">
+            <div class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">로그인</div>
+            <div class="auth-tab" id="tab-signup" onclick="switchAuthMode('signup')">회원가입</div>
+          </div>
+          <div class="input-group">
+            <label>닉네임</label>
+            <input type="text" id="inp-nick" placeholder="닉네임 입력">
+          </div>
+          <div class="input-group">
+            <label>비밀번호</label>
+            <input type="password" id="inp-pass" placeholder="비밀번호 입력">
+          </div>
+          <div style="text-align: left; margin-bottom: 15px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; color: #5d4037; font-weight: bold;">
+              <input type="checkbox" id="chk-auto-login" style="width: 20px; height: 20px;"> 
+              자동 로그인
+            </label>
+          </div>
+          <button class="btn-login" id="btn-action-login">로그인 하기</button>
+          <button class="btn-login hidden" id="btn-action-signup" style="background:#b63b3b; box-shadow: 0 4px 0 #e65100;">회원가입 하기</button>
+          <div class="login-note" style="margin-top:15px; font-size:13px; color:#666;">
+            <span id="msg-login">* 등록된 닉네임과 비번을 입력해주세요.</span>
+            <span id="msg-signup" class="hidden">* 중복되지 않는 닉네임을 생성합니다.</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="screen-title" class="screen">
+        <div id="screen-title-inner">
+          <div id="title-bg"></div>
+          <div id="title-logo"></div>
+          <div id="title-image"></div>
+          <div id="title-button"></div>
+          <button id="btn-mobile-fullscreen" style="
+              display: none;
+              position: absolute; bottom: 20px; right: 20px; z-index: 9999;
+              background: rgba(0,0,0,0.6); color: #fff; 
+              border: 2px solid #fff; border-radius: 10px;
+              padding: 18px 25px; font-family: 'DodumLocal'; font-size: 25px;
+          ">
+            전체화면 켜기
+          </button>
+        </div>
+      </div>
+
+      <div id="screen-pause" class="screen">
+        <div class="pause-box">
+          <div class="pause-title">일시정지중입니다!</div>
+          
+          <div class="pause-buttons">
+            <button class="btn-pause-action btn-resume" onclick="closePause()">
+              계속하기
+            </button>
+            
+            <div style="color:#d32f2f; font-weight:bold; font-size:18px; line-height:1.4; word-break: keep-all;">
+              ⚠ 홈으로 가면 이번 판 기록은<br>저장되지 않습니다!
+            </div>
+
+            <button class="btn-pause-action btn-home" onclick="quitGameFromPause()">
+              홈화면으로 가기
+            </button>
+          </div>
+
+          <div class="pause-note">
+            다시 '뒤로가기'를 누르면 종료됩니다.
+          </div>
+        </div>
+      </div>
+
+      <div id="screen-team" class="screen"></div>
+
+      <div id="screen-home" class="screen">
+        <div id="btn-copy-link" 
+            style="
+                position: absolute;
+                right: 23px; 
+                top: -130px; 
+                width: 400px;   
+                height: 400px;
+                background-image: url('assets/link.png');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                cursor: pointer;
+                z-index: 200;
+                transition: transform 0.1s;
+            "
+            onmouseover="this.style.transform='scale(1.0)'"
+            onmouseout="this.style.transform='scale(1.0)'"
+            onclick="copyToClipboard()">
+        </div>
+
+        <script>
+        function copyToClipboard() {
+            const url = window.location.href;
+            
+            navigator.clipboard.writeText(url).then(() => {
+                alert("게임 주소가 복사되었습니다!\n친구들에게 공유해보세요!");
+            }).catch(err => {
+                prompt("주소를 복사하세요:", url);
+            });
+        }
+        </script>
+      <div id="screen-settings" class="screen">
+        <div class="settings-box">
+          <div class="settings-title">설정</div>
+          
+          <div class="settings-content">
+            <p>기획, 아트 - 032<br>QA - 도기배, DALGI, 김피코<br>프로그래밍 - AI 활용(Gemini)</p>
+
+            <div style="margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.05); border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px 20px; justify-items: center; align-items: center;">
+              
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold; color: #5d4037;">배경음악</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chk-bgm-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold; color: #5d4037;">효과음</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chk-sfx-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold; color: #5d4037;">진상 손님</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chk-special-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold; color: #5d4037;">눈 효과</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chk-snow-toggle" checked>
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold; color: #5d4037;">전체화면</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chk-fullscreen-toggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold; color: #5d4037;">자동 로그인</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="chk-autologin-setting-toggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
+              데이터는 게임오버되면 자동으로 저장됩니다.<br>렉이 심할 경우 소리와 눈 효과를 끄면 도움이 될수도안될수도
+            </p>
+
+            <button class="btn-logout" onclick="window.logout()">
+              로그아웃 (계정 변경)
+            </button>
+          </div>
+
+          <button class="btn-close-settings" onclick="closeSettings()">닫기</button>
+        </div>
+      </div>
+        <div id="screen-hof" class="screen">
+          <div class="settings-box" style="width: 550px;"> <div class="settings-title">역대 붕어빵 장인</div>
+            
+            <div class="settings-content">
+              <div class="hof-desc">
+                초기화 전 1위를 달성한<br>전설적인 붕어빵 장인들의 전당입니다.
+              </div>
+
+              <div style="background-color:#fff9c4; border:2px solid #fbc02d; border-radius:8px; padding:8px; margin-bottom:15px; font-size:25px; color:#f57f17; font-weight:bold;">
+                ※ 랭킹 격주 초기화 일정 (1/4, 1/18, 2/1, 2/15)
+              </div>
+
+              <div class="hof-tab-header">
+                <div class="hof-tab active" onclick="switchHOFTab('money')" id="tab-hof-money">최고 수익</div>
+                <div class="hof-tab" onclick="switchHOFTab('breads')" id="tab-hof-breads">누적 붕어빵</div>
+              </div>
+
+              <div class="hof-list-container" style="max-height: 280px;">
+                
+                <div id="hof-list-money">
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">1대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">2대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">3대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">4대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">5대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+              </div>
+
+              <div id="hof-list-breads" style="display: none;">
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">1대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">2대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">3대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">4대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+                  <div class="hof-item team-none">
+                      <div><span class="hof-badge">5대</span> <span>기록 없음</span></div>
+                      <div>-</div>
+                  </div>
+              </div>
+              </div>
+            </div>
+
+            <button class="btn-close-settings" onclick="closeHOF()">닫기</button>
+          </div>
+        </div>
+
+        <script>
+        function switchHOFTab(type) {
+            document.getElementById('tab-hof-money').classList.toggle('active', type === 'money');
+            document.getElementById('tab-hof-breads').classList.toggle('active', type === 'breads');
+
+            document.getElementById('hof-list-money').style.display = (type === 'money') ? 'block' : 'none';
+            document.getElementById('hof-list-breads').style.display = (type === 'breads') ? 'block' : 'none';
+        }
+        </script>
+        <div class="home-main-area">
+          
+          <div class="home-top-row">
+            <div class="dash-box box-team" id="area-team-box">
+              <div class="team-header-overlay">
+                <div class="team-lead-title" id="home-lead-title">현재 팥붕 우세!</div>
+                <div class="team-diff-subtitle" id="home-lead-diff">18개 앞서는 중!</div>
+              </div>
+            </div>
+
+            <div class="center-top-wrapper">
+              <div class="dash-box box-rank">
+                <div class="rank-header">
+                  <div class="rank-tab active" data-type="money">수익</div>
+                  <div class="rank-tab" data-type="breads">구운 붕어빵</div>
+                  <div id="btn-rank-refresh" onclick="refreshRankingManual()" style="
+                      width: 55px; flex: none;
+                      display: flex; align-items: center; justify-content: center;
+                      background: #dcb394; cursor: pointer;
+                      border-left: 4px solid #000;
+                  ">
+                    <img id="rank-refresh-icon" src="assets/refresh.png" style="
+                        width: 30px; height: 30px; 
+                        transition: transform 1s ease-in-out;
+                        pointer-events: none;
+                    ">
+                  </div>
+                </div>
+                <div class="rank-list-area" id="rank-list-area">
+                  <div style="padding:15px;">데이터 로딩 중...</div>
+                </div>
+              </div>
+
+              <div class="dash-box box-my-stat">
+                <div id="my-stats-text"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-bottom-row">
+            <div class="dash-box box-settings" onclick="openSettings()">설정</div>
+            <div class="dash-box box-hof" onclick="openHOF()">명예의<br>전당</div>
+            <div class="dash-box box-nick">
+              <div class="nick-label">나의 닉네임</div>
+              <div class="nick-val" id="display-my-nick">Guest</div>
+            </div>
+          </div>
+
+        </div> 
+                
+        <div class="home-col-right">
+          <div class="dash-box box-stall" id="box-stall-container" style="position: relative; overflow: hidden;">
+              <canvas id="home-snow-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></canvas>
+              
+              </div>
+          
+          <button id="btn-game-start" class="btn-home-start" style="z-index: 10;"></button>
+        </div>
+      </div>
+
+      <div id="screen-tutorial" class="screen"></div>
+
+      <div id="screen-game" class="screen">
+        <div id="game-bg" class="game-layer" style="background-image: url('assets/bg_city.png'); z-index: 1;"></div>
+        
+        <div id="snow-layer" class="game-layer" style="z-index: 4; pointer-events: none;">
+          <canvas id="snow-canvas" width="1280" height="720"></canvas>
+        </div>
+
+        <div id="bg-light" class="game-layer" style="background-image: url('assets/bg_light.png'); z-index: 4;"></div>
+
+        <div id="customer-area" style="z-index: 5; pointer-events: none;">
+          <div class="customer-group" data-index="0" style="left: -350px;">
+            <div class="customer-sprite"></div>
+            <div class="speech-bubble">
+              <div class="bubble-fill-container"><div class="bubble-fill"></div></div>
+              <div class="bubble-text">...</div>
+            </div>
+          </div>
+          <div class="customer-group" data-index="1" style="left: -350px;">
+            <div class="customer-sprite"></div>
+            <div class="speech-bubble">
+              <div class="bubble-fill-container"><div class="bubble-fill"></div></div>
+              <div class="bubble-text">...</div>
+            </div>
+          </div>
+          <div class="customer-group" data-index="2" style="left: -350px;">
+            <div class="customer-sprite"></div>
+            <div class="speech-bubble">
+              <div class="bubble-fill-container"><div class="bubble-fill"></div></div>
+              <div class="bubble-text">...</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="game-stall" class="game-layer" style="background-image: url('assets/bg_stall.png'); z-index: 10;"></div>
+        <div id="hp-bar" class="game-layer" style="background-image: url('assets/hp.png'); z-index: 7;"></div>
+
+        <div id="pan-image-layers" style="z-index: 20; pointer-events: none;">
+          <div id="pan-img-0" class="game-layer pan-image"></div>
+          <div id="pan-img-1" class="game-layer pan-image"></div>
+          <div id="pan-img-2" class="game-layer pan-image"></div>
+          <div id="pan-img-3" class="game-layer pan-image"></div>
+          <div id="pan-img-4" class="game-layer pan-image"></div>
+          <div id="pan-img-5" class="game-layer pan-image"></div>
+          <div id="pan-img-6" class="game-layer pan-image"></div>
+          <div id="pan-img-7" class="game-layer pan-image"></div>
+        </div>
+
+        <div id="smoke-image-layers" style="z-index: 50; pointer-events: none;">
+          <div id="smoke-img-0" class="game-layer smoke-image"></div>
+          <div id="smoke-img-1" class="game-layer smoke-image"></div>
+          <div id="smoke-img-2" class="game-layer smoke-image"></div>
+          <div id="smoke-img-3" class="game-layer smoke-image"></div>
+          <div id="smoke-img-4" class="game-layer smoke-image"></div>
+          <div id="smoke-img-5" class="game-layer smoke-image"></div>
+          <div id="smoke-img-6" class="game-layer smoke-image"></div>
+          <div id="smoke-img-7" class="game-layer smoke-image"></div>
+        </div>
+
+        <div id="tool-img-batter" class="game-layer tool-image" style="background-image: url('assets/tool_batter.png'); z-index: 30;"></div>
+        <div id="tool-img-filling" class="game-layer tool-image" style="background-image: url('assets/tool_filling.png'); z-index: 31;"></div>
+        <div id="tool-img-flip" class="game-layer tool-image" style="background-image: url('assets/tool_flip.png'); z-index: 32;"></div>
+
+        <div id="tray-bread-layers" style="z-index: 40; pointer-events: none;">
+          <div id="tray-bread-0" class="tray-bread-img"></div>
+          <div id="tray-bread-1" class="tray-bread-img"></div>
+          <div id="tray-bread-2" class="tray-bread-img"></div>
+          <div id="tray-bread-3" class="tray-bread-img"></div>
+          <div id="tray-bread-4" class="tray-bread-img"></div>
+          <div id="tray-bread-5" class="tray-bread-img"></div>
+        </div>
+
+        <div id="display-glass-img" class="game-layer" style="background-image: url('assets/display_glass.png'); z-index: 45;"></div>
+        <div id="bag-img" class="game-layer" style="background-image: url('assets/bag_0.png'); z-index: 41;"></div>
+
+        <div id="hud-bar">
+          <div id="hud-best">최고기록: 0원</div>
+          
+          <div id="hud-left-group">
+              <div id="hud-money">번 돈: 0원</div>
+              <div id="hud-breads">붕어빵 0개</div>
+              <div id="hud-combo" style="display: none; color: #ffeb3b;">0 연속</div>
+          </div>
+          <div id="hud-mistake">실수: 0 / 5</div>
+        </div>
+        <span id="bag-count">0</span>
+
+        <div id="ui-layer">
+          <div class="pan-ui" data-index="0" style="top: 385px; left: 70px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="1" style="top: 385px; left: 270px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="2" style="top: 385px; left: 470px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="3" style="top: 385px; left: 670px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="4" style="top: 555px; left: 70px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="5" style="top: 555px; left: 270px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="6" style="top: 555px; left: 470px; width: 200px; height: 140px;"></div>
+          <div class="pan-ui" data-index="7" style="top: 555px; left: 670px; width: 200px; height: 140px;"></div>
+
+          <div class="tool-btn-ui" data-tool="batter" style="top: 220px; right: 0px; width: 380px; height: 150px;"></div>
+          <div class="tool-btn-ui" data-tool="filling" style="top: 350px; right: 0px; width: 390px; height: 180px;"></div>
+          <div class="tool-btn-ui" data-tool="flip" style="top: 490px; right: 0px; width: 390px; height: 130px;"></div>
+
+          <div id="display-tray-ui" data-index="0" style="top: 250px; left: 110px; width: 650px; height: 120px; z-index: 205;"></div>
+          <div id="bag-ui" style="top: 580px; right: 0px; width: 400px; height: 200px;"></div>
+
+          <div class="customer-ui" data-index="0" style="top: 0px; left: 80px; width: 370px; height: 300px;"></div>
+          <div class="customer-ui" data-index="1" style="top: 0px; left: 450px; width: 370px; height: 300px;"></div>
+          <div class="customer-ui" data-index="2" style="top: 0px; left: 830px; width: 370px; height: 300px;"></div>
+        </div>
+      </div>
+
+      <div id="screen-result" class="screen">
+        <div id="gameover-root">
+          <img id="gameover-bg" class="gameover-full" src="assets/game_over_bg.png" style="z-index:1;">
+          <img id="gameover-smoke1" class="gameover-full go-smoke go-smoke-visible" src="assets/game_over_smoke.png" style="z-index:2;">
+          <img id="gameover-smoke2" class="gameover-full go-smoke" src="assets/game_over_smoke2.png" style="z-index:2;">
+          <img id="gameover-title" class="gameover-full" src="assets/game_over.png" style="z-index:3;">
+
+          <div id="gameover-paper-wrap" style="z-index:5;">
+            <img id="gameover-paper" src="assets/game_over_paper.png" alt="게임오버 종이">
+            <div id="gameover-paper-inner">
+              <div id="gameover-stats">
+                <div id="result-money-text">수익 : 0원</div>
+                <div id="result-bread-text">구운 붕어빵 : 0개</div>
+                <div id="result-best-money-text">최고 수익 : 0원</div>
+                <div id="result-best-bread-text">최고 붕어빵 갯수 : 0개</div>
+              </div>
+              <div id="result-comment-text">...</div>
+              <img id="btn-result-retry-img" src="assets/button_retry.png" alt="다시하기">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script src="game.js?v=1.0.0"></script>
+<script type="module" src="firebase_logic_dist.js?v=_1.1.0"></script>
+</body>
+
+</html>
