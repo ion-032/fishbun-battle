@@ -85,7 +85,11 @@ async function preloadAllGameImages() {
     "assets/game.mp3", "assets/home1.mp3", "assets/home2.mp3", 
     "assets/pop.mp3", "assets/popp.mp3", "assets/bag.mp3", "assets/sucess.mp3", "assets/fail.mp3", "assets/faill.mp3", 
     "assets/grilling.mp3", "assets/burnt.mp3", "assets/customer_in.mp3", "assets/game_over.mp3", "assets/smoke.mp3","assets/gold.mp3",
-    "assets/yume_jumpscare.mp4"
+    "assets/yume_jumpscare.mp4",
+    "assets/customers/nero_0.png", 
+    "assets/customers/nero_1.png",
+    "assets/burning.png",
+    "assets/fire.mp4",
   ];
   list.push(...MANUAL_ASSETS);
   
@@ -213,7 +217,19 @@ const SPECIAL_CUSTOMER_DATA = {
       type: "freebie_rant",
     }
   },
+
   
+  "nero": {
+    id: "nero",
+    prob: 0.15,
+    images: ["nero_0.png", "nero_1.png", "nero_2.png"],
+    dialogOrder: ["전 탄 붕어빵이 좋아요!!"],
+    dialogSuccess: ["맛있게 드세요!"], 
+    dialogFail: ["..."],
+    logic: {
+      type: "arsonist",
+    }
+  },
   
   "yume": {
     id: "yume",
@@ -1831,7 +1847,10 @@ function spawnCustomer(idx) {
     if (specialData.id === "fisher") {
         setTimeout(() => { runFisherSequence(idx); }, 800);
     }
-
+    else if (specialData.id === "nero") {
+        setTimeout(() => { runNeroSequence(idx); }, 100);
+    }
+    
     return; 
   }
 
@@ -2554,7 +2573,7 @@ function triggerYumeGameOver(idx, msg) {
   
   setTimeout(() => {
      
-     playChromaVideo("yume_jumpscare.mp4", 1300, () => {
+     playChromaVideo("assets/yume_jumpscare.mp4", 1300, () => {
         endGame();
      });
   }, 1000); 
@@ -2569,9 +2588,9 @@ function deliverBagToCustomer(customerIndex) {
 
   if (bagCount <= 0) return;
 
-  if (c.isSpecial && c.specialLogic && c.specialLogic.type === "thief") {
-      return; 
-  }
+  if (c.isSpecial && (c.specialId === "nero" || (c.specialLogic && c.specialLogic.type === "thief"))) {
+      return;
+    }
   if (c.isWeirdOrder) {
       return;
   }
@@ -3512,107 +3531,11 @@ window.testSpawn = function(specialId) {
   if (data.id === "fisher") {
       setTimeout(() => { runFisherSequence(idx); }, 800);
   }
+  else if (data.id === "nero") {
+      setTimeout(() => { runNeroSequence(idx); }, 100);
+  }
   console.log(`특수손님 [${specialId}] 소환 완료! (주문: ${size}개)`);
 };
-
-
-function playChromaVideo(videoSrc, duration, onComplete) {
-  
-  if (window.location.protocol === 'file:') {
-    alert("문제발생! 그 사람 탓이에요!");
-    if (onComplete) onComplete();
-    return;
-  }
-
-  
-  const vid = document.createElement("video");
-  vid.src = videoSrc; 
-  vid.crossOrigin = "anonymous"; 
-  vid.autoplay = true;
-  vid.muted = false; 
-  vid.playsInline = true;
-  vid.style.display = "none";
-  document.body.appendChild(vid);
-
-  
-  const canvas = document.createElement("canvas");
-  canvas.id = "chroma-canvas";
-  canvas.style.position = "fixed";
-  canvas.style.top = "50%";
-  canvas.style.left = "50%";
-  canvas.style.transform = "translate(-50%, -50%) scale(2)"; 
-  canvas.style.zIndex = "99999"; 
-  canvas.style.pointerEvents = "none";
-  document.body.appendChild(canvas);
-
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-  let animationId;
-  let isFinished = false; 
-
-  
-  function finish() {
-    if (isFinished) return;
-    isFinished = true;
-
-    cancelAnimationFrame(animationId);
-    if(vid.parentNode) document.body.removeChild(vid);
-    if(canvas.parentNode) document.body.removeChild(canvas);
-
-    if (onComplete) onComplete();
-  }
-
-  
-  function render() {
-    if (isFinished || vid.paused || vid.ended) return;
-
-    if (canvas.width !== vid.videoWidth && vid.videoWidth > 0) {
-      canvas.width = vid.videoWidth;
-      canvas.height = vid.videoHeight;
-    }
-
-    if (canvas.width > 0 && canvas.height > 0) {
-      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
-      try {
-        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const len = frame.data.length / 4;
-        for (let i = 0; i < len; i++) {
-          const r = frame.data[i * 4 + 0];
-          const g = frame.data[i * 4 + 1];
-          const b = frame.data[i * 4 + 2];
-          
-          if (g > 100 && g > r * 1.5 && g > b * 1.5) {
-            frame.data[i * 4 + 3] = 0; 
-          }
-        }
-        ctx.putImageData(frame, 0, 0);
-      } catch (err) {
-        console.error("Canvas Security Error:", err);
-        finish();
-        return;
-      }
-    }
-    animationId = requestAnimationFrame(render);
-  }
-
-  
-  vid.addEventListener("play", () => { render(); });
-  
-  
-  vid.addEventListener("ended", finish); 
-
-  
-  if (duration && duration > 0) {
-    setTimeout(finish, duration);
-  }
-  
-  
-  vid.play().catch(e => {
-    console.warn("소리 재생 실패, 음소거로 재시도", e);
-    vid.muted = true;
-    vid.play().catch(() => finish());
-  });
-}
 
 window.startTeamSelect = function() {
     const loginBox = document.getElementById("login-box-container");
@@ -4051,3 +3974,184 @@ window.closeHOF = function() {
     const screen = document.getElementById("screen-hof");
     if (screen) screen.classList.remove("active");
 };
+
+window.disablePause = function() {
+    // 게임을 멈추는 함수를 빈 껍데기로 덮어씌워 버립니다.
+    window.forcePauseGame = function() {
+        console.log("🛑 일시중지 방어! (백그라운드 실행 중)");
+    };
+    console.log("✅ 백그라운드 일시중지가 해제되었습니다. 이제 창을 내려도 게임이 돌아갑니다.");
+};
+
+window.disablePause();
+
+function runNeroSequence(idx) {
+    const c = customers[idx];
+    if (!c) return;
+  
+    const gameScreen = document.getElementById("screen-game");
+    if (!gameScreen) return;
+
+    setTimeout(() => {
+        if (!customers[idx]) return;
+
+        customers[idx].phase = "success"; 
+        customers[idx].facePhase = "success"; 
+        customers[idx].waitMs = 10000; 
+        updateCustomer(idx);
+
+        const burningOverlay = document.createElement("div");
+        Object.assign(burningOverlay.style, {
+            position: "absolute", 
+            zIndex: "800",        
+            top: "0", left: "0", 
+            width: "1280px",    
+            height: "720px",
+            backgroundImage: "url('assets/burning.png')", 
+            backgroundSize: "100% 100%",
+            pointerEvents: "none",
+            mixBlendMode: "normal", 
+            opacity: "1" 
+        });
+        
+        burningOverlay.animate([
+            { transform: 'translate(0,0)' },
+            { transform: 'translate(-5px, -5px)' }, 
+            { transform: 'translate(5px, 5px)' },
+            { transform: 'translate(-5px, 5px)' },
+            { transform: 'translate(5px, -5px)' },
+            { transform: 'translate(0,0)' }
+        ], { duration: 100, iterations: Infinity });
+        gameScreen.appendChild(burningOverlay);
+
+        playChromaVideo("assets/yume_jumpscare.mp4", 2500);
+
+        let burnedCount = 0;
+        for (let i = 0; i < NUM_PANS; i++) {
+            if (pans[i].state !== PanState.EMPTY) {
+                pans[i].state = PanState.BURNT;
+                pans[i].stateMs = 0; 
+                pans[i].hasSpecial = false;
+                burnedCount++;
+            }
+        }
+        if (burnedCount > 0) {
+             playSfx("assets/burnt.mp3");
+             updateAllPans();
+        }
+
+        setTimeout(() => {
+            if (burningOverlay) burningOverlay.remove();
+            
+            if (customers[idx]) {
+                customers[idx].dialog = "맛있게 드세요!";
+                customers[idx].facePhase = "order";
+                updateCustomer(idx);
+
+                setTimeout(() => {
+                     if (customers[idx]) {
+                        customers[idx].isLeaving = true;
+                        customers[idx].waitMs = 1000;
+                        updateCustomer(idx);
+                     }
+                }, 1000);
+            }
+        }, 2500);
+
+    }, 1000);
+}
+
+function playChromaVideo(videoSrc, duration, onComplete) {
+  if (window.location.protocol === 'file:') {
+    if (onComplete) onComplete();
+    return;
+  }
+  
+  const gameScreen = document.getElementById("screen-game");
+  if (!gameScreen) return;
+
+  const vid = document.createElement("video");
+  vid.src = videoSrc; 
+  vid.crossOrigin = "anonymous"; 
+  vid.autoplay = true;
+  vid.muted = false; 
+  vid.playsInline = true;
+
+  vid.style.position = "absolute"; 
+  vid.style.top = "0"; vid.style.left = "0";
+  vid.style.width = "1px"; vid.style.height = "1px"; 
+  vid.style.opacity = "0"; 
+  vid.style.pointerEvents = "none";
+  vid.style.zIndex = "801"; 
+  
+  gameScreen.appendChild(vid);
+
+  const canvas = document.createElement("canvas");
+  canvas.id = "chroma-canvas";
+  canvas.style.position = "absolute"; 
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.width = 1280;
+  canvas.height = 720;
+  canvas.style.width = "1280px";
+  canvas.style.height = "720px";
+  canvas.style.zIndex = "802"; 
+  canvas.style.pointerEvents = "none";
+  
+  gameScreen.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  let animationId;
+  let isFinished = false; 
+
+  function finish() {
+    if (isFinished) return;
+    isFinished = true;
+
+    cancelAnimationFrame(animationId);
+    if(vid.parentNode) vid.parentNode.removeChild(vid);
+    if(canvas.parentNode) canvas.parentNode.removeChild(canvas);
+
+    if (onComplete) onComplete();
+  }
+
+  function render() {
+    if (isFinished || vid.paused || vid.ended) return;
+
+    if (canvas.width > 0 && canvas.height > 0) {
+      ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+      try {
+        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const len = frame.data.length / 4;
+        
+        for (let i = 0; i < len; i++) {
+          const r = frame.data[i * 4 + 0];
+          const g = frame.data[i * 4 + 1];
+          const b = frame.data[i * 4 + 2];
+          
+          if (g > 100 && g > r * 1.4 && g > b * 1.4) {
+            frame.data[i * 4 + 3] = 0; 
+          }
+        }
+        ctx.putImageData(frame, 0, 0);
+      } catch (err) {
+        finish();
+        return;
+      }
+    }
+    animationId = requestAnimationFrame(render);
+  }
+
+  vid.addEventListener("play", () => { render(); });
+  vid.addEventListener("ended", finish); 
+  
+  if (duration && duration > 0) {
+    setTimeout(finish, duration);
+  }
+  
+  vid.play().catch(e => {
+    vid.muted = true;
+    vid.play().catch(() => finish());
+  });
+}
