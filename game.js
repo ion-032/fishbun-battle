@@ -2735,18 +2735,8 @@ function onPanClick(index, e) {
         actionDone = true;
       } else if (startState === PanState.SMOKE2) {
         pan.state = PanState.DONE;
-
-        const diff = getDifficultyFactor();
-        const speedMult = Math.max(0.3, 1.0 - (diff * 0.4));
-        const maxTime = SMOKE_TIME * speedMult;
-        const timeLeft = maxTime - pan.stateMs;
-
-        const perfectWindow = Math.max(200, maxTime * 0.2);
-        const isTimingGood = timeLeft <= perfectWindow;
-
-        const goldChance = Math.min(0.5, 0.05 + (combo * 0.01));
-
-        if (isTimingGood && Math.random() < goldChance) {
+        const goldChance = Math.min(0.15, 0.01 + (combo * 0.003));
+        if (Math.random() < goldChance) {
             pan.hasSpecial = true;
             playSfx("assets/gold.mp3");
         } else {
