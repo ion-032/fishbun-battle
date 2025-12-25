@@ -3975,14 +3975,6 @@ window.closeHOF = function() {
     if (screen) screen.classList.remove("active");
 };
 
-window.disablePause = function() {
-    // 게임을 멈추는 함수를 빈 껍데기로 덮어씌워 버립니다.
-    window.forcePauseGame = function() {
-        console.log("🛑 일시중지 방어! (백그라운드 실행 중)");
-    };
-    console.log("✅ 백그라운드 일시중지가 해제되었습니다. 이제 창을 내려도 게임이 돌아갑니다.");
-};
-
 window.disablePause();
 
 function runNeroSequence(idx) {
