@@ -90,6 +90,11 @@ async function preloadAllGameImages() {
     "assets/customers/nero_1.png",
     "assets/burning.png",
     "assets/fire.mp4",
+    "assets/customers/king_0.png",
+    "assets/customers/king_1.png",
+    "assets/customers/king_2.png",
+    "assets/game_over_king_red.png",
+    "assets/game_over_king_shu.png",
   ];
   list.push(...MANUAL_ASSETS);
   
@@ -185,7 +190,7 @@ let lastSpecialType = null;
 
 
 let isYumeGameOver = false;
-
+let isKingGameOver = false;
 
 const SPECIAL_CUSTOMER_DATA = {
   
@@ -218,7 +223,15 @@ const SPECIAL_CUSTOMER_DATA = {
     }
   },
 
-  
+  "king": {
+    id: "king",
+    prob: 0.15,
+    images: ["king_0.png", "king_1.png", "king_2.png"],
+    dialogOrder: ["안녕하신가. 나는 붕어빵국에서 온 왕이라네."],
+    dialogSuccess: ["고맙소! 그대는 우리 나라의 은인이요."],
+    dialogFail: ["여봐라, 저 자를 끌고 가거라."],
+    logic: { type: "king_intro" }
+  },
   "nero": {
     id: "nero",
     prob: 0.15,
@@ -687,7 +700,8 @@ const WEIRD_ORDERS = [
   "보드카 마티니, 젓지 말고 흔들어서.",
   "그그 뭐더라 아 그 뭐지 그...",
   "말차 붕어빵이 있으면 좋을텐데요.",
-  "진짜 붕어가 들어간 붕어빵은 없나요?"
+  "진짜 붕어가 들어간 붕어빵은 없나요?",
+  "두바이 쫀득 쿠키 하나요!"
 ];
 
 const WEIRD_EXIT_DIALOGS = [
@@ -1335,6 +1349,7 @@ function setScreen(state) {
 function resetGameData() {
   mySessionBreads = 0;
   isYumeGameOver = false;
+  isKingGameOver = false;
   const snowLayer = document.getElementById("snow-layer");
   const gameScreen = document.getElementById("screen-game");
   
@@ -1850,7 +1865,9 @@ function spawnCustomer(idx) {
     else if (specialData.id === "nero") {
         setTimeout(() => { runNeroSequence(idx); }, 100);
     }
-    
+    else if (specialData.id === "king") {
+        setTimeout(() => { runKingIntro(idx); }, 100);
+    }
     return; 
   }
 
@@ -2296,6 +2313,10 @@ function gameTick() {
             updateCustomer(i);
             continue;
         }
+        if (c.isSpecial && c.specialId === "king") {
+            triggerKingGameOver(i);
+            return;
+        }
 
         if (c.isSpecial && c.specialLogic && c.specialLogic.type === "thief") {
              customers[customerIndex] = null;
@@ -2625,6 +2646,10 @@ function deliverBagToCustomer(customerIndex) {
 
   const isSnowmanPass = (c.isSpecial && c.specialId === "snowman" && c.orderSize >= 3);
   if (!isSnowmanPass && bagCount < c.orderSize) {
+    if (c.isSpecial && c.specialId === "king") {
+       triggerKingGameOver(customerIndex);
+       return;
+    }
     combo = 0;
     mistakes += 1;
     triggerHpShake();
@@ -2666,7 +2691,11 @@ function deliverBagToCustomer(customerIndex) {
 
   if (c.isSpecial && c.specialLogic && c.specialLogic.type === "freebie_rant") {
      gain = 0;
-  } else {
+  }
+  else if (c.isSpecial && c.specialId === "king") {
+     gain = gain * 2; 
+  }
+  else {
      if (badCount > 0) gain *= 0.5;
      if (bagHasSpecial) gain *= 2;
      gain = Math.round(gain);
@@ -2679,7 +2708,7 @@ function deliverBagToCustomer(customerIndex) {
   bagBadCount = 0;
 
   c.phase = "success";
-  c.facePhase = (badCount > 0) ? "fail" : "success";
+  c.facePhase = (badCount > 0 && c.specialId !== "king") ? "fail" : "success";
   
   if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
      c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogSuccess);
@@ -2958,7 +2987,7 @@ function buildResultScreen() {
     if (snowLayer && gameScreen && snowLayer.parentNode !== gameScreen) {
     }
     screenResult.innerHTML = "";
-    if (!isYumeGameOver && snowLayer) screenResult.appendChild(snowLayer);
+    if (!isYumeGameOver && !isKingGameOver && snowLayer) screenResult.appendChild(snowLayer);
   } catch(e) { console.error(e); }
 
   try {
@@ -2982,6 +3011,11 @@ function buildResultScreen() {
     const overImg = (cTeam === "shu") ? "game_over_shu.png" : "game_over.png";
     const over = makeLayer("game-over-main", overImg, 3);
 
+    if (isKingGameOver) {
+        const kingImg = (cTeam === "shu") ? "game_over_king_shu.png" : "game_over_king_red.png";
+        over.style.backgroundImage = `url('assets/${kingImg}')`;
+        over.style.zIndex = "2"; 
+    }
     let yumeLayer = null;
     if (isYumeGameOver) {
       yumeLayer = makeLayer("yume-bg", "yume_chan.png", 4);
@@ -3050,7 +3084,8 @@ function buildResultScreen() {
     verdictDiv.style.fontWeight = "normal";
 
     let msg = "";
-    if (isYumeGameOver) msg = "해당 업소는 폭발과 함께\n날아가버렸으므로 슬프지만\n영업정지 처분을 내림";
+    if (isKingGameOver) msg = "범죄인 인도조약에 따라\n끌려 가버렸으므로 어쨌든\n영업정지 처분을 내림.";
+    else if (isYumeGameOver) msg = "해당 업소는 폭발과 함께\n날아가버렸으므로 슬프지만\n영업정지 처분을 내림.";
     else if (m < 0) msg = "뭐 어떻게 한거냐...";
     else if (m < 20000) msg = "해당 업소는 장사를\n절망적으로 못해서\n영업정지 처분을 내림.";
     else if (m < 40000) msg = "해당 업소는 장사를 제법\n잘했으나 아무튼\n영업정지 처분을 내림.";
@@ -3533,6 +3568,9 @@ window.testSpawn = function(specialId) {
   }
   else if (data.id === "nero") {
       setTimeout(() => { runNeroSequence(idx); }, 100);
+  }
+  else if (data.id === "king") {
+      setTimeout(() => { runKingIntro(idx); }, 100);
   }
   console.log(`특수손님 [${specialId}] 소환 완료! (주문: ${size}개)`);
 };
@@ -4146,4 +4184,53 @@ function playChromaVideo(videoSrc, duration, onComplete) {
     vid.muted = true;
     vid.play().catch(() => finish());
   });
+}
+
+function runKingIntro(idx) {
+    const c = customers[idx];
+    if (!c) return;
+
+    c.waitMs = 999999; 
+    updateCustomer(idx);
+
+    setTimeout(() => {
+        if (!customers[idx]) return;
+        customers[idx].dialog = "우리 붕어빵국은 계속되는 저출산고령화에 국력이 약해지고 있소.";
+        updateCustomer(idx);
+        setTimeout(() => {
+            if (!customers[idx]) return;
+            customers[idx].dialog = "그래서 그대의 도움을 받고자 하는데....";
+            updateCustomer(idx);
+
+            setTimeout(() => {
+                if (!customers[idx]) return;
+              
+                const count = 12 + (Math.floor(Math.random() * 7) * 3);
+                
+                customers[idx].orderSize = count;
+                customers[idx].dialog = `${count}마리의 백성을 좀 구워주게나.`;
+                const realWait = (count * 8000) + 10000;
+                customers[idx].waitMs = realWait;
+                customers[idx].orderWaitMs = realWait;
+                
+                updateCustomer(idx);
+            }, 1500);
+        }, 1500);
+    }, 1500);
+}
+
+function triggerKingGameOver(idx) {
+    const c = customers[idx];
+    if (c) {
+        c.phase = "fail";
+        c.facePhase = "fail";
+        c.dialog = "여봐라, 저 자를 끌고 가거라.";
+        c.waitMs = 99999;
+        updateCustomer(idx);
+    }
+
+    isKingGameOver = true;
+    setTimeout(() => {
+        endGame();
+    }, 1500);
 }
