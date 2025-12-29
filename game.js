@@ -41,6 +41,13 @@ const CRITICAL_IMAGES = [
 
   // 기타
   "assets/display_glass.png",
+  "assets/customers/king_2.png",
+  "assets/game_over_king_red.png",
+  "assets/game_over_king_shu.png",
+    
+    // [추가] 기사 이미지
+  "assets/customers/knight_0.png",
+
 ];
 
 function collectInlineBackgroundUrls() {
@@ -222,7 +229,15 @@ const SPECIAL_CUSTOMER_DATA = {
       type: "freebie_rant",
     }
   },
-
+  "knight": {
+      id: "knight",
+      prob: 0.15, 
+      images: ["knight_0.png", "knight_0.png", "knight_0.png"], 
+      dialogOrder: ["황금붕어빵을 차려오거라. 황금붕어빵을 차려오라고 하지않앗느냐."],
+      dialogSuccess: ["황금에 영광있으라!"],
+      dialogFail: ["실망스럽군..."],
+      logic: { type: "knight" }
+    },
   "king": {
     id: "king",
     prob: 0.15,
@@ -2644,8 +2659,28 @@ function deliverBagToCustomer(customerIndex) {
     }
   }
 
+if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
+      combo = 0;
+      mistakes += 2; // 체력 2칸 감소
+      triggerHpShake();
+      playSfx("assets/fail.mp3");
+      
+      bagCount = 0; bagHasSpecial = false; bagBadCount = 0;
+      updateBag(); updateHud();
+      
+      if (mistakes >= MISTAKE_LIMIT) { endGame(); return; }
+
+      c.phase = "fail";
+      c.facePhase = "fail"; 
+      c.dialog = "실망스럽군...";
+      c.waitMs = CUSTOMER_RESULT_STAY_MS;
+      updateCustomer(customerIndex);
+      return;
+  }
+
   const isSnowmanPass = (c.isSpecial && c.specialId === "snowman" && c.orderSize >= 3);
-  if (!isSnowmanPass && bagCount < c.orderSize) {
+  const isKnightPass = (c.isSpecial && c.specialId === "knight");
+  if (!isSnowmanPass && !isKnightPass && bagCount < c.orderSize) {
     if (c.isSpecial && c.specialId === "king") {
        triggerKingGameOver(customerIndex);
        return;
@@ -2685,6 +2720,9 @@ function deliverBagToCustomer(customerIndex) {
   }
 
   const chargedCount = Math.min(bagCount, c.orderSize);
+  if (c.isSpecial && c.specialId === "knight") {
+        chargedCount = bagCount;
+    }
   const badCount = Math.min(bagBadCount, chargedCount); 
   
   let gain = (chargedCount / 3) * BASE_UNIT_PRICE;
@@ -2695,6 +2733,9 @@ function deliverBagToCustomer(customerIndex) {
   else if (c.isSpecial && c.specialId === "king") {
      gain = gain * 2; 
   }
+  else if (c.isSpecial && c.specialId === "knight") {
+     gain = gain * 2;
+  }  
   else {
      if (badCount > 0) gain *= 0.5;
      if (bagHasSpecial) gain *= 2;
