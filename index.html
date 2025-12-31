@@ -1037,11 +1037,14 @@
             <p style="font-size: 16px; color: #666; margin-bottom: 20px;">
               데이터는 게임오버되면 자동으로 저장됩니다.<br>렉이 심할 경우 소리와 눈 효과를 끄면 도움이 될수도안될수도
             </p>
-
+            <button class="btn-logout" style="background:#fbc02d; color:#5d4037; margin-bottom:10px; box-shadow: 0 4px 0 #f57f17;" onclick="openCustomEditor()">
+              커스텀 손님 만들기 / 적용
+            </button>
             <button class="btn-logout" onclick="window.logout()">
               로그아웃 (계정 변경)
             </button>
           </div>
+
 
           <button class="btn-close-settings" onclick="closeSettings()">닫기</button>
         </div>
@@ -1055,7 +1058,7 @@
               </div>
 
               <div style="background-color:#fff9c4; border:2px solid #fbc02d; border-radius:8px; padding:8px; margin-bottom:15px; font-size:20px; color:#f57f17; font-weight:bold;">
-                ※ 랭킹초기화 일정 1/4, 1/18, 2/1, 2/15 오후 10시
+                ※ 랭킹초기화 - 오후10시 1/11, 1/25, 2/8, 2/22, 3/1(마지막)
               </div>
 
               <div class="hof-tab-header">
@@ -1325,6 +1328,83 @@
 
 <script src="game.js?v=1.0.0"></script>
 <script type="module" src="firebase_logic_dist.js?v=_1.1.0"></script>
-</body>
 
+<div id="screen-custom-editor" class="screen" style="z-index: 40000; background: rgba(0,0,0,0.85); flex-direction: column; overflow-y: auto; font-family: 'DodumLocal';">
+  <div class="settings-box" style="width: 800px; margin: 40px auto; background: #fdf5e6; border: 6px solid #5d4037; border-radius: 20px; padding: 30px;">
+    
+    <div class="settings-title" style="font-family:'Together'; color:#5d4037; font-size:40px; margin-bottom:20px; border-bottom:3px solid #5d4037; padding-bottom:10px;">
+      커스텀 손님 제작
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding:15px; background:#fff8e1; border: 3px solid #fbc02d; border-radius:12px;">
+      <label style="font-size:20px; font-weight:bold; color:#5d4037; cursor:pointer; display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="chk-use-custom" style="width:24px; height:24px; accent-color:#5d4037;"> 
+        커스텀 모드 사용 
+      </label>
+      <div style="display:flex; gap:10px;">
+        <button onclick="exportCustomData()" style="padding:8px 15px; background:#8d6e63; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">파일 저장</button>
+        <button onclick="document.getElementById('file-import').click()" style="padding:8px 15px; background:#a1887f; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">파일 불러오기</button>
+        <input type="file" id="file-import" style="display:none;" accept=".json" onchange="importCustomData(this)">
+      </div>
+    </div>
+
+    <div style="text-align:left; background:#fff; padding:20px; border-radius:16px; border:3px solid #5d4037; margin-bottom:20px;">
+      <h3 style="margin-top:0; color:#5d4037; font-family:'Together'; font-size:24px;">새 손님 정보 입력</h3>
+      
+      <div style="display:flex; gap:15px; margin-bottom:15px;">
+        <div style="flex:1; text-align:center;">
+          <div style="font-weight:bold; color:#5d4037; margin-bottom:5px;">1. 기본</div>
+          <img id="prev-0" style="width:100%; height:120px; object-fit:contain; border:2px dashed #bcaaa4; border-radius:8px; background:#fafafa; margin-bottom:5px;">
+          <input type="file" id="inp-img-0" accept="image/*" onchange="previewImage(this, 'prev-0')" style="width:100%; font-size:12px;">
+        </div>
+        <div style="flex:1; text-align:center;">
+          <div style="font-weight:bold; color:#5d4037; margin-bottom:5px;">2. 성공</div>
+          <img id="prev-1" style="width:100%; height:120px; object-fit:contain; border:2px dashed #bcaaa4; border-radius:8px; background:#fafafa; margin-bottom:5px;">
+          <input type="file" id="inp-img-1" accept="image/*" onchange="previewImage(this, 'prev-1')" style="width:100%; font-size:12px;">
+        </div>
+        <div style="flex:1; text-align:center;">
+          <div style="font-weight:bold; color:#5d4037; margin-bottom:5px;">3. 실패</div>
+          <img id="prev-2" style="width:100%; height:120px; object-fit:contain; border:2px dashed #bcaaa4; border-radius:8px; background:#fafafa; margin-bottom:5px;">
+          <input type="file" id="inp-img-2" accept="image/*" onchange="previewImage(this, 'prev-2')" style="width:100%; font-size:12px;">
+        </div>
+      </div>
+
+      <div style="display:grid; gap:10px;">
+        <div>
+          <label style="font-weight:bold; color:#5d4037;">주문 대사 {n} = 개수</label>
+          <input type="text" id="inp-txt-order" placeholder="붕어빵 {n}개 주세요!" style="width:100%; padding:8px; border:2px solid #bcaaa4; border-radius:6px; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-weight:bold; color:#5d4037;">성공 대사</label>
+            <input type="text" id="inp-txt-success" placeholder="감사합니다!" style="width:100%; padding:8px; border:2px solid #bcaaa4; border-radius:6px; box-sizing:border-box;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-weight:bold; color:#5d4037;">실패 대사</label>
+            <input type="text" id="inp-txt-fail" placeholder="장사접으세요!" style="width:100%; padding:8px; border:2px solid #bcaaa4; border-radius:6px; box-sizing:border-box;">
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button id="btn-add-custom" onclick="addCustomCustomer()" style="flex:1; padding:12px; background:#ffb347; color:#fff; font-size:18px; font-family:'Together'; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 0 #e65100;">
+          리스트에 추가하기
+        </button>
+        <button id="btn-cancel-edit" onclick="cancelEdit()" style="width:100px; padding:12px; background:#9e9e9e; color:#fff; font-size:18px; font-family:'Together'; border:none; border-radius:8px; cursor:pointer; display:none; box-shadow:0 4px 0 #616161;">
+          취소
+        </button>
+      </div>      
+    </div>
+
+    <div style="margin-top:20px; text-align:left;">
+      <h3 style="color:#5d4037; font-family:'Together'; font-size:24px;">등록된 손님 리스트 (<span id="custom-count">0</span>명)</h3>
+      <div id="custom-list" style="max-height:300px; overflow-y:auto; background:#fff; border:3px solid #5d4037; border-radius:12px; padding:10px;">
+        </div>
+    </div>
+
+    <button class="btn-close-settings" onclick="closeCustomEditor()" style="margin-top:20px; background:#5d4037; color:#fff; box-shadow: 0 4px 0 #3e2723;">나가기</button>
+  </div>
+</div>
 </html>
+
+</body>

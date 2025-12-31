@@ -853,7 +853,8 @@ window.resetSeasonManually = async function() {
         }
     } catch (e) {
         console.error("초기화 실패:", e);
-        alert("❌ 실패! 에러 내용: " + e.message);
+        alert("실패! 에러 내용: " + e.message);
     }
 
 };
+

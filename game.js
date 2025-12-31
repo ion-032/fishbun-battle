@@ -1538,6 +1538,9 @@ function updateCustomer(index) {
   let stateIndex = 0;
   if (facePhase === "success") stateIndex = 1;
   else if (facePhase === "fail" || phase === "rant") stateIndex = 2;
+
+  
+
   if (
     c.type === "fisher" ||
     c.isWeirdOrder ||
@@ -1547,7 +1550,10 @@ function updateCustomer(index) {
   }
 
   if (spriteEl) {
-    if (typeof c.type === "string") {
+    if (c.type === "custom" && c.customData) {
+        spriteEl.style.backgroundImage = `url('${c.customData.images[stateIndex]}')`;
+    } 
+    else if (typeof c.type === "string") {
       spriteEl.style.backgroundImage = `url('assets/customers/${c.type}_${stateIndex}.png')`;
     } else {
       const typeId = typeof c.type === "number" ? c.type : 0;
@@ -1763,6 +1769,60 @@ function updateBag(isDragging = false) {
 }
 
 function spawnCustomer(idx) {
+  if (isCustomMode && customCustomers.length > 0) {
+      let candidates = customCustomers;
+      
+      if (customCustomers.length > 2) {
+          const activeIds = customers
+              .filter(c => c && c.type === "custom" && c.customData)
+              .map(c => c.customData.id);
+          
+          const filtered = customCustomers.filter(c => !activeIds.includes(c.id));
+          
+          if (filtered.length > 0) {
+              candidates = filtered;
+          }
+      }
+
+      const randomCustom = candidates[Math.floor(Math.random() * candidates.length)];
+      
+      const diff = getDifficultyFactor();
+      let w3 = 50 - (30 * diff); 
+      let w6 = 40 + (10 * diff); 
+      const totalW = w3 + w6 + (10 + (20 * diff));
+      let r = Math.random() * totalW;
+      let size = (r < w3) ? 3 : (r < w3 + w6 ? 6 : 9);
+
+      let orderDialog = randomCustom.dialogOrder.replace("{n}", size);
+      const waitMs = size * 8000 + 8000; 
+      
+      customers[idx] = {
+          type: "custom", 
+          customData: randomCustom, 
+          orderSize: size,
+          waitMs: waitMs,
+          orderWaitMs: waitMs,
+          isLeaving: false,
+          phase: "order",
+          dialog: orderDialog,
+          isSpecial: false, 
+      };
+      
+      customerCooldowns[idx] = 0;
+
+      const groupEl = customerGroupElems[idx];
+      if (groupEl) {
+        groupEl.style.transition = "none";
+        groupEl.style.left = CUSTOMER_POS_OUT_LEFT + "px";
+        void groupEl.offsetWidth; 
+        groupEl.style.transition = "left 0.6s ease-in-out";
+      }
+
+      updateCustomer(idx);
+      playSfx("assets/customer_in.mp3");
+      return; 
+  }
+
   const diff = getDifficultyFactor();
 
   let isWeird = false;
@@ -2742,7 +2802,10 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
     c.phase = "fail";
     c.facePhase = "fail";
     
-    if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
+    if (c.type === "custom" && c.customData) {
+        c.dialog = c.customData.dialogFail.replace("{n}", c.orderSize);
+    }
+    else if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
       c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogFail);
     } else {
       c.dialog = pickCustomerLine("fail", c.orderSize);
@@ -2753,7 +2816,7 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
     return;
   }
 
-  const chargedCount = Math.min(bagCount, c.orderSize);
+  let chargedCount = Math.min(bagCount, c.orderSize);
   if (c.isSpecial && c.specialId === "knight") {
         chargedCount = bagCount;
     }
@@ -2768,7 +2831,7 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
      gain = gain * 2; 
   }
   else if (c.isSpecial && c.specialId === "knight") {
-     gain = gain * 2;
+     gain = (c.orderSize / 3) * BASE_UNIT_PRICE * 2;
   }  
   else {
      if (badCount > 0) gain *= 0.5;
@@ -2783,13 +2846,16 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
   bagBadCount = 0;
 
   c.phase = "success";
-  c.facePhase = (badCount > 0 && c.specialId !== "king") ? "fail" : "success";
-  
-  if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
+
+  if (c.type === "custom" && c.customData) {
+      c.dialog = c.customData.dialogSuccess.replace("{n}", c.orderSize);
+  }
+  else if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
      c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogSuccess);
   } else {
      c.dialog = pickCustomerLine("success", c.orderSize);
   }
+
   if (c.phase === "rant") {
 
   } else {
@@ -3868,7 +3934,16 @@ setTimeout(() => {
         chkSpecial.checked = window.settingUseSpecial;
         chkSpecial.onclick = function(e) {
             window.settingUseSpecial = e.target.checked;
-            localStorage.setItem("settingUseSpecial", e.target.checked);
+            
+            if (window.settingUseSpecial) {
+                isCustomMode = false;
+                localStorage.setItem("settingUseCustom", "false");
+
+                const customChk = document.getElementById("chk-use-custom");
+                if (customChk) customChk.checked = false;
+            }
+            
+            localStorage.setItem("settingUseSpecial", window.settingUseSpecial);
         };
     }
     const chkSnow = document.getElementById("chk-snow-toggle");
@@ -4053,10 +4128,15 @@ function activateDragVisuals(e) {
 }
 
 function forcePauseGame() {
-  if (gameState !== STATE_GAME) return;
+  if (typeof gameState === 'undefined' || gameState !== STATE_GAME) return;
+
+  const screenGame = document.getElementById("screen-game");
+  if (!screenGame || !screenGame.classList.contains("active")) return;
 
   const pauseScreen = document.getElementById("screen-pause");
-  if (pauseScreen && !pauseScreen.classList.contains("active")) {
+  if (pauseScreen && pauseScreen.classList.contains("active")) return;
+
+  if (pauseScreen) {
       pauseScreen.classList.add("active");
   }
 
@@ -4087,8 +4167,6 @@ window.closeHOF = function() {
     const screen = document.getElementById("screen-hof");
     if (screen) screen.classList.remove("active");
 };
-
-window.disablePause();
 
 function runNeroSequence(idx) {
     const c = customers[idx];
@@ -4308,4 +4386,234 @@ function triggerKingGameOver(idx) {
     setTimeout(() => {
         endGame();
     }, 1500);
+}
+
+
+let customCustomers = [];
+let isCustomMode = false;
+let editingIndex = null;
+
+function openCustomEditor() {
+  document.getElementById("screen-custom-editor").classList.add("active");
+  renderCustomList();
+}
+
+function closeCustomEditor() {
+  document.getElementById("screen-custom-editor").classList.remove("active");
+  isCustomMode = document.getElementById("chk-use-custom").checked;
+  localStorage.setItem("settingUseCustom", isCustomMode);
+  localStorage.setItem("customCustomersData", JSON.stringify(customCustomers));
+}
+
+function previewImage(input, imgId) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById(imgId).src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function addCustomCustomer() {
+  const img0 = document.getElementById("prev-0").src;
+  const img1 = document.getElementById("prev-1").src;
+  const img2 = document.getElementById("prev-2").src;
+
+  if (!img0 || !img1 || !img2 || img0 === location.href || img0 === "") {
+    alert("이미지 3개를 모두 등록해주세요!");
+    return;
+  }
+
+  const orderTxt = document.getElementById("inp-txt-order").value.trim() || "붕어빵 {n}개 주세요!";
+  const successTxt = document.getElementById("inp-txt-success").value.trim() || "감사합니다!";
+  const failTxt = document.getElementById("inp-txt-fail").value.trim() || "장사접으세요!";
+
+  const newC = {
+    id: (editingIndex !== null) ? customCustomers[editingIndex].id : Date.now(), 
+    images: [img0, img1, img2],
+    dialogOrder: orderTxt,
+    dialogSuccess: successTxt,
+    dialogFail: failTxt
+  };
+
+  if (editingIndex !== null) {
+      customCustomers[editingIndex] = newC;
+      cancelEdit();
+  } else {
+      customCustomers.push(newC);
+      resetCustomInputs();
+  }
+
+  renderCustomList();
+}
+
+function renderCustomList() {
+  const listEl = document.getElementById("custom-list");
+  document.getElementById("custom-count").innerText = customCustomers.length;
+  listEl.innerHTML = "";
+
+  customCustomers.forEach((c, idx) => {
+    const div = document.createElement("div");
+    div.style.border = "2px solid #e0e0e0";
+    div.style.borderRadius = "8px";
+    div.style.padding = "8px";
+    div.style.marginBottom = "8px";
+    div.style.display = "flex";
+    div.style.alignItems = "center";
+    div.style.backgroundColor = "#fafafa";
+
+    div.innerHTML = `
+      <img src="${c.images[0]}" style="width:60px; height:60px; object-fit:contain; border-radius:6px; border:1px solid #ccc; margin-right:12px; background:#fff;">
+      <div style="flex:1; overflow:hidden;">
+        <div style="font-size:12px; color:#8d6e63; font-weight:bold;">No.${idx + 1}</div>
+        <div style="font-size:14px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+           <span style="color:#5d4037; font-weight:bold;">${c.dialogOrder}</span> 
+           <span style="color:#aaa; margin:0 5px;">|</span> 
+           ${c.dialogSuccess} 
+           <span style="color:#aaa; margin:0 5px;">|</span> 
+           ${c.dialogFail}
+        </div>
+      </div>
+      <div style="display:flex; gap:5px; margin-left:10px;">
+        <button onclick="loadCustomForEdit(${idx})" style="background:#8d6e63; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">수정</button>
+        <button onclick="removeCustom(${idx})" style="background:#b74c4c; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">삭제</button>
+      </div>
+    `;
+    listEl.appendChild(div);
+  });
+}
+
+function removeCustom(idx) {
+  if(confirm("정말 삭제할까요?")) {
+    customCustomers.splice(idx, 1);
+    renderCustomList();
+  }
+}
+
+function exportCustomData() {
+  if (customCustomers.length === 0) {
+    alert("저장할 커스텀 손님이 없습니다.");
+    return;
+  }
+  const dataStr = JSON.stringify(customCustomers);
+  const blob = new Blob([dataStr], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = "my_fishbun_customers.json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  alert("파일이 다운로드 되었습니다!!");
+}
+
+function importCustomData(input) {
+  if (!input.files || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        customCustomers = [...customCustomers, ...data];
+        renderCustomList();
+        alert(`${data.length}명의 손님을 불러왔습니다!`);
+      } else {
+        alert("올바르지 않은 파일 형식입니다.");
+      }
+    } catch (err) {
+      alert("파일을 읽는 중 오류가 발생했습니다.");
+    }
+  };
+  reader.readAsText(input.files[0]);
+}
+
+window.addEventListener("load", () => {
+    const savedCustom = localStorage.getItem("customCustomersData");
+    if (savedCustom) {
+        try { customCustomers = JSON.parse(savedCustom); } catch(e){}
+    }
+    const savedMode = localStorage.getItem("settingUseCustom");
+    isCustomMode = (savedMode === "true");
+    
+    const chk = document.getElementById("chk-use-custom");
+    if(chk) {
+        chk.checked = isCustomMode;
+        chk.addEventListener("change", (e) => {
+             isCustomMode = e.target.checked;
+            
+             if (isCustomMode) {
+                 window.settingUseSpecial = false;
+                 localStorage.setItem("settingUseSpecial", "false");
+
+                 const specialChk = document.getElementById("chk-special-toggle");
+                 if (specialChk) specialChk.checked = false;
+             }
+             
+             localStorage.setItem("settingUseCustom", isCustomMode);
+        });
+    }
+});
+
+
+function loadCustomForEdit(idx) {
+    const c = customCustomers[idx];
+    if(!c) return;
+
+    editingIndex = idx; 
+
+    document.getElementById("inp-txt-order").value = c.dialogOrder;
+    document.getElementById("inp-txt-success").value = c.dialogSuccess;
+    document.getElementById("inp-txt-fail").value = c.dialogFail;
+
+    document.getElementById("prev-0").src = c.images[0];
+    document.getElementById("prev-1").src = c.images[1];
+    document.getElementById("prev-2").src = c.images[2];
+
+    const btnAdd = document.getElementById("btn-add-custom");
+    btnAdd.innerText = "수정 완료";
+    btnAdd.style.background = "#6d4c41"; 
+    btnAdd.style.boxShadow = "0 4px 0 #3e2723";
+    
+    document.getElementById("btn-cancel-edit").style.display = "block";
+
+    const editorScreen = document.getElementById("screen-custom-editor");
+    if(editorScreen) editorScreen.scrollTop = 0;
+}
+
+function cancelEdit() {
+    editingIndex = null;
+    resetCustomInputs();
+
+    const btnAdd = document.getElementById("btn-add-custom");
+    btnAdd.innerText = "리스트에 추가하기";
+    btnAdd.style.background = "#ffb347";
+    btnAdd.style.boxShadow = "0 4px 0 #e65100";
+    
+    document.getElementById("btn-cancel-edit").style.display = "none";
+}
+
+function resetCustomInputs() {
+    document.getElementById("inp-txt-order").value = "";
+    document.getElementById("inp-txt-success").value = "";
+    document.getElementById("inp-txt-fail").value = "";
+    
+    document.getElementById("prev-0").removeAttribute("src");
+    document.getElementById("prev-1").removeAttribute("src");
+    document.getElementById("prev-2").removeAttribute("src");
+    
+    document.getElementById("inp-img-0").value = "";
+    document.getElementById("inp-img-1").value = "";
+    document.getElementById("inp-img-2").value = "";
+}
+
+const originalRemoveCustom = removeCustom; 
+removeCustom = function(idx) {
+    if(editingIndex === idx) cancelEdit();
+    if(confirm("정말 삭제할까요?")) {
+        customCustomers.splice(idx, 1);
+        if(editingIndex !== null && editingIndex > idx) editingIndex--;
+        renderCustomList();
+    }
 }
