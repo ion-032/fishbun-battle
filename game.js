@@ -2452,10 +2452,17 @@ function gameTick() {
         }
 
         c.phase = "fail";
-        c.dialog = pickCustomerLine("fail", c.orderSize);
 
-        if (c.isSpecial) c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogFail);
-        c.waitMs = CUSTOMER_RESULT_STAY_MS; 
+        if (c.type === "custom" && c.customData) {
+            c.dialog = c.customData.dialogFail.replaceAll("{n}", c.orderSize);
+        } 
+        else if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
+            c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogFail);
+        } 
+        else {
+            c.dialog = pickCustomerLine("fail", c.orderSize);
+        }
+        c.waitMs = CUSTOMER_RESULT_STAY_MS;
         if (c.isSpecial && c.specialId === "snowman" && c.orderSize >= 3) {
         } else {
              mistakes += 1;
@@ -2463,6 +2470,7 @@ function gameTick() {
              triggerHpShake();
              playSfx("assets/fail.mp3", 1.0);playSfx("assets/fail.mp3", 1.0);playSfx("assets/fail.mp3", 1.0);
         }
+
         updateHud();
         if (mistakes >= MISTAKE_LIMIT) {
           endGame();
