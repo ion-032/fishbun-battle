@@ -1347,7 +1347,12 @@
         <input type="file" id="file-import" style="display:none;" accept=".json" onchange="importCustomData(this)">
       </div>
     </div>
-
+    <div style="background:#efebe9; border:3px solid #8d6e63; border-radius:12px; padding:15px 20px; margin-bottom:20px; text-align:left;">
+      <h4 style="margin:0 0 5px 0; color:#5d4037; font-family:'Together'; font-size:20px;">커스텀 손님을 공유하는 법</h4>
+      <div style="font-size:16px; color:#4e342e; font-weight:bold;">
+        만든 손님 리스트를 [파일 저장]로 저장하고 공유하세요! 다른 유저가 그 파일을 받아 [파일 불러오기]를 하면 불러와집니다!
+      </div>
+    </div>
     <div style="text-align:left; background:#fff; padding:20px; border-radius:16px; border:3px solid #5d4037; margin-bottom:20px;">
       <h3 style="margin-top:0; color:#5d4037; font-family:'Together'; font-size:24px;">새 손님 정보 입력</h3>
       
@@ -1397,7 +1402,16 @@
     </div>
 
     <div style="margin-top:20px; text-align:left;">
-      <h3 style="color:#5d4037; font-family:'Together'; font-size:24px;">등록된 손님 리스트 (<span id="custom-count">0</span>명)</h3>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; color:#5d4037; font-family:'Together'; font-size:24px;">
+          등록된 손님 리스트 (<span id="custom-count">0</span>명)
+        </h3>
+        <button onclick="resetCustomList()" style="padding:6px 12px; background:#d32f2f; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer; box-shadow:0 3px 0 #b71c1c;">
+          리스트 초기화
+        </button>
+      </div>
+
       <div id="custom-list" style="max-height:300px; overflow-y:auto; background:#fff; border:3px solid #5d4037; border-radius:12px; padding:10px;">
         </div>
     </div>

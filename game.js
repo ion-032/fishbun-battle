@@ -1793,7 +1793,7 @@ function spawnCustomer(idx) {
       let r = Math.random() * totalW;
       let size = (r < w3) ? 3 : (r < w3 + w6 ? 6 : 9);
 
-      let orderDialog = randomCustom.dialogOrder.replace("{n}", size);
+      let orderDialog = randomCustom.dialogOrder.replaceAll("{n}", size);
       const waitMs = size * 8000 + 8000; 
       
       customers[idx] = {
@@ -2803,7 +2803,7 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
     c.facePhase = "fail";
     
     if (c.type === "custom" && c.customData) {
-        c.dialog = c.customData.dialogFail.replace("{n}", c.orderSize);
+        c.dialog = c.customData.dialogFail.replaceAll("{n}", c.orderSize);
     }
     else if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
       c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogFail);
@@ -2848,7 +2848,7 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
   c.phase = "success";
 
   if (c.type === "custom" && c.customData) {
-      c.dialog = c.customData.dialogSuccess.replace("{n}", c.orderSize);
+      c.dialog = c.customData.dialogSuccess.replaceAll("{n}", c.orderSize);
   }
   else if (c.isSpecial && SPECIAL_CUSTOMER_DATA[c.specialId]) {
      c.dialog = randChoice(SPECIAL_CUSTOMER_DATA[c.specialId].dialogSuccess);
@@ -4617,3 +4617,23 @@ removeCustom = function(idx) {
         renderCustomList();
     }
 }
+
+window.resetCustomList = function() {
+  if (customCustomers.length === 0) {
+    alert("초기화할 손님이 없습니다.");
+    return;
+  }
+
+  if (confirm("현재 리스트에 있는 커스텀 손님을 삭제하시겠습니까?\n(저장하지 않은 손님리스트는 복구할 수 없습니다!)")) {
+
+    customCustomers = [];
+
+    renderCustomList();
+    
+    localStorage.setItem("customCustomersData", JSON.stringify([]));
+
+    cancelEdit();
+    
+    alert("모든 손님 리스트가 초기화되었습니다.");
+  }
+};
