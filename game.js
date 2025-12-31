@@ -1496,9 +1496,6 @@ function addBreadToBag(hasSpecial, quality) {
 }
 
 
-
-
-
 function updateCustomer(index) {
   const c = customers[index];
   const groupEl = customerGroupElems[index];
@@ -1506,53 +1503,91 @@ function updateCustomer(index) {
   const spriteEl = groupEl.querySelector(".customer-sprite");
   const fillEl = bubbleEl.querySelector(".bubble-fill");
   const textEl = bubbleEl.querySelector(".bubble-text");
+  const uiEl = customerUIElems[index];
 
-if (!c) {
+  if (!c) {
     bubbleEl.classList.remove("active");
     if (spriteEl) {
       spriteEl.style.backgroundImage = "none";
-      spriteEl.classList.remove("customer-shiver"); 
+      spriteEl.classList.remove("customer-shiver");
     }
     if (fillEl) fillEl.style.transform = "translateY(100%)";
     if (textEl) textEl.textContent = "";
+    if (uiEl) {
+      uiEl.style.width = "370px";
+      uiEl.style.height = "300px";
+      uiEl.style.left = CUSTOMER_POS_SLOTS[index] + "px";
+      uiEl.style.top = "0px";
+      uiEl.style.display = "block";
+    }
     return;
   }
 
-  
-  const targetLeft = c.isLeaving
+  let targetLeft = c.isLeaving
     ? CUSTOMER_POS_OUT_RIGHT
     : CUSTOMER_POS_SLOTS[index];
-  groupEl.style.left = targetLeft + "px";
 
-  
+  if (c.isLeaving && c.isSpecial && c.specialId === "knight") {
+    targetLeft = 1800;
+  }
+  groupEl.style.left = targetLeft + "px";
 
   const phase = c.phase || "order";
   const facePhase = c.facePhase || phase;
 
-  let stateIndex = 0; 
+  let stateIndex = 0;
   if (facePhase === "success") stateIndex = 1;
-  else if (facePhase === "fail" || phase === "rant") {
-      stateIndex = 2;
-    }
-  if (c.type === "fisher" || c.isWeirdOrder) {
+  else if (facePhase === "fail" || phase === "rant") stateIndex = 2;
+  if (
+    c.type === "fisher" ||
+    c.isWeirdOrder ||
+    (c.isSpecial && c.specialId === "knight")
+  ) {
     stateIndex = 0;
-  }  
+  }
+
   if (spriteEl) {
-    if (typeof c.type === 'string') {
+    if (typeof c.type === "string") {
       spriteEl.style.backgroundImage = `url('assets/customers/${c.type}_${stateIndex}.png')`;
     } else {
-      const typeId = (typeof c.type === "number") ? c.type : 0;
+      const typeId = typeof c.type === "number" ? c.type : 0;
       spriteEl.style.backgroundImage = `url('assets/customers/${typeId}_${stateIndex}.png')`;
     }
 
-    
     if (c.specialId === "beggar" && phase === "rant") {
       spriteEl.classList.add("customer-shiver");
     } else {
       spriteEl.classList.remove("customer-shiver");
     }
 
+    spriteEl.style.width = "";
+    spriteEl.style.height = "";
+    spriteEl.style.left = "";
+    spriteEl.style.bottom = "";
 
+    if (c.isSpecial && c.specialId === "knight") {
+      spriteEl.style.width = "500px";
+      spriteEl.style.height = "450px";
+      spriteEl.style.left = "-150px";
+      spriteEl.style.bottom = "-90px";
+    }
+  }
+
+  if (uiEl) {
+    uiEl.style.width = "370px";
+    uiEl.style.height = "300px";
+    uiEl.style.left = CUSTOMER_POS_SLOTS[index] + "px";
+    uiEl.style.top = "0px";
+
+    if (c.isSpecial && c.specialId === "knight") {
+      uiEl.style.width = "500px";
+      uiEl.style.height = "450px";
+      uiEl.style.left = CUSTOMER_POS_SLOTS[index] - 150 + "px";
+      uiEl.style.top = "-50px";
+    }
+
+    if (c.isLeaving) uiEl.style.display = "none";
+    else uiEl.style.display = "block";
   }
 
   if (c.isLeaving && !c.isWeirdOrder) {
@@ -1561,29 +1596,27 @@ if (!c) {
     bubbleEl.classList.add("active");
   }
 
-  
-  
   if (textEl) {
     const txt = c.dialog || "";
     textEl.textContent = txt;
-    setBubbleFontSize(textEl, txt);   
+    setBubbleFontSize(textEl, txt);
   }
-
-
-  
 
   if (fillEl) {
     let tPercent = 0;
-    
     if (c.phase === "rant") {
-       tPercent = 100; 
-    } else if (c.phase === "order" && typeof c.orderWaitMs === "number" && c.orderWaitMs > 0) {
-      let remainRatio = c.waitMs / c.orderWaitMs;   
+      tPercent = 100;
+    } else if (
+      c.phase === "order" &&
+      typeof c.orderWaitMs === "number" &&
+      c.orderWaitMs > 0
+    ) {
+      let remainRatio = c.waitMs / c.orderWaitMs;
       if (remainRatio < 0) remainRatio = 0;
       if (remainRatio > 1) remainRatio = 1;
-      tPercent = (1 - remainRatio) * 100;           
+      tPercent = (1 - remainRatio) * 100;
     } else {
-      tPercent = 100; 
+      tPercent = 100;
     }
     fillEl.style.transform = `translateY(${tPercent}%)`;
   }
@@ -1813,6 +1846,7 @@ function spawnCustomer(idx) {
         if (data.id === lastSpecialType) continue; 
         
         if (data.id === "fisher" && trayBreads.length === 0) continue;
+        if (data.id === "knight" && elapsedMs < 120000) continue;
 
         if (roll < accumulatedProb + (data.prob * timeProbMult)) {
           specialData = data;
