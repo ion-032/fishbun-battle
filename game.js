@@ -4787,7 +4787,8 @@ window.resetCustomInputs = function() {
     if(filterChk) filterChk.checked = false;
 };
 
-let actionHistory = []
+
+let actionHistory = []; 
 let lastCheckTime = 0;
 
 function checkMacroActivity() {
@@ -4799,26 +4800,31 @@ function checkMacroActivity() {
     return false;
   }
 
-  const delta = now - lastCheckTime;
+  const delta = now - lastCheckTime; 
   lastCheckTime = now;
 
   actionHistory.push(delta);
-  if (actionHistory.length > 20) actionHistory.shift();
+  
+  if (actionHistory.length > 40) actionHistory.shift();
 
-  if (actionHistory.length < 10) return false;
+  if (actionHistory.length < 30) return false;
 
   const sum = actionHistory.reduce((a, b) => a + b, 0);
   const avg = sum / actionHistory.length;
 
   const variance = actionHistory.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / actionHistory.length;
   const stdDev = Math.sqrt(variance);
-  if (avg < 45 && stdDev < 8) {
-      console.warn(`매크로 감지됨!!`);
-      return true; 
-  }
-  
-  if (avg < 20) {
+
+  if (avg < 30) {
+      if (stdDev > 10) return false; 
+      
+      console.warn(`초고속 매크로 감지: 평균 ${avg.toFixed(2)}ms`);
       return true;
+  }
+
+  if (avg < 35 && stdDev < 4) {
+      console.warn(`정밀 매크로 감지: 평균 ${avg.toFixed(2)}ms, 편차 ${stdDev.toFixed(2)}`);
+      return true; 
   }
 
   return false;
