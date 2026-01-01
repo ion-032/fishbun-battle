@@ -102,6 +102,7 @@ async function preloadAllGameImages() {
     "assets/customers/king_2.png",
     "assets/game_over_king_red.png",
     "assets/game_over_king_shu.png",
+    "assets/bag_burnt_1.png", "assets/bag_burnt_2.png", "assets/bag_burnt_3.png", "assets/drag_bag_burnt.png",
   ];
   list.push(...MANUAL_ASSETS);
   
@@ -962,6 +963,9 @@ const BagImageURL = {
   special_1: "url('assets/bag_special_1.png')",
   special_2: "url('assets/bag_special_2.png')",
   special_3: "url('assets/bag_special_3.png')",
+  burnt_1: "url('assets/bag_burnt_1.png')",
+  burnt_2: "url('assets/bag_burnt_2.png')",
+  burnt_3: "url('assets/bag_burnt_3.png')",
 };
 
 const ToolCursorURL = {
@@ -987,6 +991,7 @@ const DragGhostURL = {
   bread_burnt: "url('assets/drag_bread_burnt.png')",             
   bag: "url('assets/drag_bag.png')",
   bag_special: "url('assets/drag_bag_special.png')",
+  bag_burnt: "url('assets/drag_bag_burnt.png')",
 };
 
 function updateHpBar() {
@@ -1753,15 +1758,25 @@ function updateBag(isDragging = false) {
 
   if (isDragging) {
     imgUrl = BagImageURL.empty;
-  } else {
-    if (bagCount === 1) {
-      imgUrl = bagHasSpecial ? BagImageURL.special_1 : BagImageURL.normal_1;
-    } else if (bagCount === 2) {
-      imgUrl = bagHasSpecial ? BagImageURL.special_2 : BagImageURL.normal_2;
-    } else if (bagCount >= 3) {
-      imgUrl = bagHasSpecial ? BagImageURL.special_3 : BagImageURL.normal_3;
+  } else if (bagCount > 0) {
+    let type = "normal";
+
+    if (bagHasSpecial && bagBadCount > 0) {
+        type = "normal";
+    } else if (bagHasSpecial) {
+        type = "special";
+    } else if (bagBadCount > 0) {
+        type = "burnt";
+    } else {
+        type = "normal";
     }
+
+    let countKey = bagCount;
+    if (bagCount >= 3) countKey = 3;
+
+    imgUrl = BagImageURL[`${type}_${countKey}`];
   }
+
   bagImageElem.style.backgroundImage = imgUrl;
 
   bagCountElem.textContent = bagCount;
@@ -2854,6 +2869,13 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
   bagBadCount = 0;
 
   c.phase = "success";
+  const isBadService = (badCount > 0 && !bagHasSpecial); 
+
+  if (isBadService) {
+      c.facePhase = "fail"; 
+  } else {
+      c.facePhase = "success";
+  }
 
   if (c.type === "custom" && c.customData) {
       c.dialog = c.customData.dialogSuccess.replaceAll("{n}", c.orderSize);
@@ -2865,7 +2887,6 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
   }
 
   if (c.phase === "rant") {
-
   } else {
 
       if (badCount > 0) {
@@ -2884,6 +2905,10 @@ if (c.isSpecial && c.specialId === "knight" && !bagHasSpecial) {
 }
 
 function onPanClick(index, e) {
+  if (checkMacroActivity()) {
+      triggerCheaterLockdown(); 
+      return;
+  }
   if (isAbnormalClickSpeed()) return;
   if (gameState !== STATE_GAME) return;
   if (dragActive) return;
@@ -4124,7 +4149,18 @@ function activateDragVisuals(e) {
     ghost.style.height = scaledPx(140);
   } 
   else if (type === "bag") {
-    const img = bagHasSpecial ? DragGhostURL.bag_special : DragGhostURL.bag;
+    let img;
+    
+    if (bagHasSpecial && bagBadCount > 0) {
+        img = DragGhostURL.bag;
+    } else if (bagHasSpecial) {
+        img = DragGhostURL.bag_special;
+    } else if (bagBadCount > 0) {
+        img = DragGhostURL.bag_burnt;
+    } else {
+        img = DragGhostURL.bag;
+    }
+
     ghost.style.backgroundImage = img;
     ghost.style.width = scaledPx(300);
     ghost.style.height = scaledPx(280);
@@ -4645,3 +4681,145 @@ window.resetCustomList = function() {
     alert("모든 손님 리스트가 초기화되었습니다.");
   }
 };
+
+
+let rawCustomImages = [null, null, null];
+
+window.previewImage = function(input, imgId) {
+  if (input.files && input.files[0]) {
+    const idx = parseInt(imgId.split('-')[1]); 
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      rawCustomImages[idx] = e.target.result; 
+      updateSinglePreview(idx); 
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+};
+
+window.toggleYellowFilter = function() {
+    for(let i=0; i<3; i++) {
+        updateSinglePreview(i);
+    }
+};
+
+function updateSinglePreview(idx) {
+    const raw = rawCustomImages[idx];
+    const imgEl = document.getElementById(`prev-${idx}`);
+    if (!raw || !imgEl) return;
+
+    const useFilter = document.getElementById('chk-yellow-filter').checked;
+
+    if (useFilter) {
+        applyYellowFilter(raw, (filteredData) => {
+            imgEl.src = filteredData;
+        });
+    } else {
+        imgEl.src = raw;
+    }
+}
+
+function applyYellowFilter(base64, callback) {
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(img, 0, 0);
+
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = '#feb930ff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(img, 0, 0);
+
+        callback(canvas.toDataURL());
+    };
+    img.src = base64;
+}
+
+window.loadCustomForEdit = function(idx) {
+    const c = customCustomers[idx];
+    if(!c) return;
+
+    editingIndex = idx; 
+
+    document.getElementById("inp-txt-order").value = c.dialogOrder;
+    document.getElementById("inp-txt-success").value = c.dialogSuccess;
+    document.getElementById("inp-txt-fail").value = c.dialogFail;
+
+    rawCustomImages = [...c.images]; 
+    
+    const filterChk = document.getElementById("chk-yellow-filter");
+    if(filterChk) filterChk.checked = false;
+
+    for(let i=0; i<3; i++) updateSinglePreview(i);
+
+    const btnAdd = document.getElementById("btn-add-custom");
+    btnAdd.innerText = "수정 완료";
+    btnAdd.style.background = "#6d4c41"; 
+    btnAdd.style.boxShadow = "0 4px 0 #3e2723";
+    
+    document.getElementById("btn-cancel-edit").style.display = "block";
+    
+    const editorScreen = document.getElementById("screen-custom-editor");
+    if(editorScreen) editorScreen.scrollTop = 0;
+};
+
+window.resetCustomInputs = function() {
+    document.getElementById("inp-txt-order").value = "";
+    document.getElementById("inp-txt-success").value = "";
+    document.getElementById("inp-txt-fail").value = "";
+    
+    document.getElementById("prev-0").removeAttribute("src");
+    document.getElementById("prev-1").removeAttribute("src");
+    document.getElementById("prev-2").removeAttribute("src");
+    
+    document.getElementById("inp-img-0").value = "";
+    document.getElementById("inp-img-1").value = "";
+    document.getElementById("inp-img-2").value = "";
+
+    rawCustomImages = [null, null, null];
+    const filterChk = document.getElementById("chk-yellow-filter");
+    if(filterChk) filterChk.checked = false;
+};
+
+let actionHistory = []
+let lastCheckTime = 0;
+
+function checkMacroActivity() {
+  const now = Date.now();
+  
+  if (lastCheckTime === 0 || now - lastCheckTime > 1000) {
+    actionHistory = [];
+    lastCheckTime = now;
+    return false;
+  }
+
+  const delta = now - lastCheckTime;
+  lastCheckTime = now;
+
+  actionHistory.push(delta);
+  if (actionHistory.length > 20) actionHistory.shift();
+
+  if (actionHistory.length < 10) return false;
+
+  const sum = actionHistory.reduce((a, b) => a + b, 0);
+  const avg = sum / actionHistory.length;
+
+  const variance = actionHistory.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / actionHistory.length;
+  const stdDev = Math.sqrt(variance);
+  if (avg < 45 && stdDev < 8) {
+      console.warn(`매크로 감지됨!!`);
+      return true; 
+  }
+  
+  if (avg < 20) {
+      return true;
+  }
+
+  return false;
+}
