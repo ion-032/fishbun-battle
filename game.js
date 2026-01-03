@@ -496,30 +496,22 @@ function resizeGame() {
   const top  = (vh - displayH) / 2;
 
   
-// [수정] 직접 좌표 계산 대신 CSS 중앙 정렬 사용 (아이패드 쏠림 방지)
   scaler.style.position = "absolute";
   scaler.style.left = "50%";
   scaler.style.top = "50%";
-  // translate(-50%, -50%)로 정중앙을 맞추고, 그 상태에서 scale을 적용
   scaler.style.transform = `translate(-50%, -50%) scale(${scale})`;
   scaler.style.transformOrigin = "center center";
   
-// [추가] 사파리 확대/스크롤 원천 차단
   document.documentElement.style.touchAction = "none";
   document.body.style.touchAction = "none";
   document.body.style.overflow = "hidden";
   document.body.style.position = "fixed";
   document.body.style.width = "100%";
   document.body.style.height = "100%";
-
-  // 사파리 제스처(핀치줌, 더블탭) 강제 무시 리스너 등록 (중복 등록 방지)
   if (!window.safariZoomBlockerAdded) {
       window.safariZoomBlockerAdded = true;
-      // 핀치 줌(손가락 벌리기) 방지
       document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, {passive: false});
-      // 더블 클릭(PC/모바일 공통) 방지
       document.addEventListener('dblclick', function(e) { e.preventDefault(); }, {passive: false});
-      // 빠른 더블 탭 방지 (가장 중요)
       let lastTouchEnd = 0;
       document.addEventListener('touchend', function(event) {
           const now = (new Date()).getTime();
